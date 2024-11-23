@@ -37,18 +37,14 @@ async def answer_questions(quiz_json, llm, prompt, character_description, exampl
     structured_llm = llm.with_structured_output(quiz_model)
     parser = PydanticOutputParser(pydantic_object=quiz_model)
     prompted_llm = prompt | structured_llm
-    try:
-        llm_response = await prompted_llm.ainvoke(
-            {
-                'character_description': character_description, 
-                'format_instructions': parser.get_format_instructions(),
-                'questions': question_list,
-                'example': example
-            }
-        )
-    except ValidationError as e:
-        print('Questions skipped due to validation error.')
-        raise e
+    llm_response = await prompted_llm.ainvoke(
+        {
+            'character_description': character_description, 
+            'format_instructions': parser.get_format_instructions(),
+            'questions': question_list,
+            'example': example
+        }
+    )
 
     answers_in_order = [x[1]._value_ for x in llm_response]
     

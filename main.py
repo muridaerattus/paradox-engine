@@ -56,7 +56,11 @@ async def credits(interaction: discord.Interaction):
 async def classpect(interaction: discord.Interaction, personality: str):
     """Given a personality, decide a Class and Aspect, along with corresponding powers in battle."""
     await interaction.response.defer(thinking=True)
-    result = await calculate_title(personality, class_quiz_json, aspect_quiz_json)
+    try:
+        result = await calculate_title(personality, class_quiz_json, aspect_quiz_json)
+    except Exception as e:
+        await interaction.followup.send(f'```[ERROR] Skaian link temporarily disconnected. Please try again later.```')
+        return
     if len(result) > 1800:
         i = 1799
         while i > 0:
