@@ -23,7 +23,7 @@ async def quiz_to_model(quiz_json):
 async def generate_question_list(quiz_json):
     return '\n'.join([f'{i+1}. {question['question']}' for i, question in enumerate(quiz_json)])
 
-async def answer_questions(quiz_json, llm, prompt, character_description):
+async def answer_questions(quiz_json, llm, prompt, character_description, example):
     results = set()
     for question in quiz_json:
         for answer in question['answers']:
@@ -42,7 +42,8 @@ async def answer_questions(quiz_json, llm, prompt, character_description):
             {
                 'character_description': character_description, 
                 'format_instructions': parser.get_format_instructions(),
-                'questions': question_list
+                'questions': question_list,
+                'example': example
             }
         )
     except ValidationError as e:
@@ -70,20 +71,23 @@ async def answer_questions(quiz_json, llm, prompt, character_description):
 
 async def calculate_title(character_description, class_quiz_json, aspect_quiz_json):
     # llm = ChatAnthropic(model="claude-3-5-sonnet-20241022")
-    llm = ChatAnthropic(model="claude-3-5-sonnet-20241022", temperature=0.5)
-    prompt = ChatPromptTemplate([
-        ('system', 
-         """You are answering a personality quiz. Your personality is described in a few paragraphs below.
-         <PERSONALITY>
-         {character_description}
-         </PERSONALITY>
-         You are about to be given the questions in the quiz. Pick the answers that most fit with your personality. You may only choose one option for each question.
-         {format_instructions}"""),
+    llm = ChatAnthropic(model="claude-3-opus-latest")
+    async with aiofiles.open(f'prompts/quiz_answerer.md') as f:
+        quiz_answerer_prompt_text = await f.read()
+    quiz_answerer_prompt = ChatPromptTemplate([
+        ('system', quiz_answerer_prompt_text),
         ('user', '{questions}')
     ])
 
-    class_result = await answer_questions(class_quiz_json, llm, prompt, character_description)
-    aspect_result = await answer_questions(aspect_quiz_json, llm, prompt, character_description)
+    class_example = None
+    aspect_example = None
+    async with aiofiles.open(f'prompts/class_example.md') as f:
+        class_example = await f.read()
+    async with aiofiles.open(f'prompts/aspect_example.md') as f:
+        aspect_example = await f.read()
+
+    class_result = await answer_questions(class_quiz_json, llm, quiz_answerer_prompt, character_description, class_example)
+    aspect_result = await answer_questions(aspect_quiz_json, llm, quiz_answerer_prompt, character_description, aspect_example)
 
     class_result = class_result.split(' ')[0].capitalize()
     aspect_result = aspect_result.capitalize()
