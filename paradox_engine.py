@@ -1,74 +1,85 @@
 import aiofiles
+import random
 from enum import Enum
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, ValidationError, create_model
+from pydantic.fields import FieldInfo
 from langchain_anthropic import ChatAnthropic
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 
-def to_snake_case(string):
-    letters_and_spaces = set('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ')
-    string = ''.join(filter(letters_and_spaces.__contains__, string))
-    return ('_'.join(string.split(' '))).upper()
+async def format_answer_string(s: str):
+    return s.lower().replace('.', '').replace('"', '')
 
-async def create_enum_from_json(question):
-    answer_list = [a['answer'] for a in question['answers']]
-    return Enum('AnswerField', {to_snake_case(a): a for a in answer_list})
+async def quiz_to_model(quiz_json):
+    enums = [Enum(
+        question['question'],
+        ((answer['answer'], answer['answer']) for answer in question['answers']),
+        type=str)
+        for question in quiz_json]
+    attrs = {f'Answer{i+1}': (question, FieldInfo(description=f"Answer to the question \"{question.__name__}\"")) for i, question in enumerate(enums)}
+    quiz_model = create_model("QuizAnswers", **attrs)
+    return quiz_model
 
-async def create_model_from_enum(enum):
-    class AnswerToQuizQuestion(BaseModel):
-        ThoughtProcess: str = Field(description='About 30 words or less to justify an answer before you write it down.')
-        AnswerField: enum
-    return AnswerToQuizQuestion
+async def generate_question_list(quiz_json):
+    return '\n'.join([f'{i+1}. {question['question']}' for i, question in enumerate(quiz_json)])
 
 async def answer_questions(quiz_json, llm, prompt, character_description):
     results = set()
     for question in quiz_json:
         for answer in question['answers']:
+            answer['answer'] = await format_answer_string(answer['answer'])
             results.update(answer['personality_types'])
 
     result_scores = {result: 0 for result in results}
-    for question in quiz_json:
+    quiz_model = await quiz_to_model(quiz_json)
+    question_list = await generate_question_list(quiz_json)
+
+    structured_llm = llm.with_structured_output(quiz_model)
+    parser = PydanticOutputParser(pydantic_object=quiz_model)
+    prompted_llm = prompt | structured_llm
+    try:
+        llm_response = await prompted_llm.ainvoke(
+            {
+                'character_description': character_description, 
+                'format_instructions': parser.get_format_instructions(),
+                'questions': question_list
+            }
+        )
+    except ValidationError as e:
+        print('Questions skipped due to validation error.')
+        raise e
+
+    answers_in_order = [x[1]._value_ for x in llm_response]
+    
+    for i, question in enumerate(quiz_json):
         answer_list = question['answers']
         answers_by_text = {a['answer']: a['personality_types'] for a in answer_list}
-
-        answer_enum = await create_enum_from_json(question)
-        answer_model = await create_model_from_enum(answer_enum)
-
-        structured_llm = llm.with_structured_output(answer_model)
-        parser = PydanticOutputParser(pydantic_object=answer_model)
-        prompted_llm = prompt | structured_llm
-        try:
-            llm_response = await prompted_llm.ainvoke(
-                {
-                    'character_description': character_description, 
-                    'format_instructions': parser.get_format_instructions(),
-                    'question': question['question']
-                }
-            )
             
-            answer = llm_response.AnswerField.value
-            personality_types = answers_by_text[answer]
-            for result in personality_types:
-                result_scores[result] += 1
+        answer = answers_in_order[i]
+        personality_types = answers_by_text[answer]
+        for result in personality_types:
+            result_scores[result] += 1
+        print(f"{question['question']}: {answer}")
 
-            print(f"{question['question']}: {answer}")
-        except ValidationError as e:
-            print('Question skipped due to validation error.')
-        
-    return max(result_scores, key=result_scores.get)
+    print(result_scores)
+    
+    max_score = max(result_scores.values())
+    max_results = [res for res in result_scores if result_scores[res] == max_score]
+    print(max_results)
+    return random.choice(max_results)
 
 async def calculate_title(character_description, class_quiz_json, aspect_quiz_json):
     # llm = ChatAnthropic(model="claude-3-5-sonnet-20241022")
-    llm = ChatAnthropic(model="claude-3-5-haiku-20241022", temperature=0.0)
+    llm = ChatAnthropic(model="claude-3-5-sonnet-20241022", temperature=0.5)
     prompt = ChatPromptTemplate([
         ('system', 
          """You are answering a personality quiz. Your personality is described in a few paragraphs below.
          <PERSONALITY>
          {character_description}
          </PERSONALITY>
-         You are about to be given the next question in the quiz. Pick the answer that most fits with your personality.
+         You are about to be given the questions in the quiz. Pick the answers that most fit with your personality. You may only choose one option for each question.
          {format_instructions}"""),
-        ('user', '{question}')
+        ('user', '{questions}')
     ])
 
     class_result = await answer_questions(class_quiz_json, llm, prompt, character_description)
