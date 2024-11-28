@@ -16,7 +16,9 @@ async def quiz_to_model(quiz_json):
         ((answer['answer'], answer['answer']) for answer in question['answers']),
         type=str)
         for question in quiz_json]
-    attrs = {f'Answer{i+1}': (question, FieldInfo(description=f"Answer to the question \"{question.__name__}\"")) for i, question in enumerate(enums)}
+    chain_of_thought_attrs = {f'ThinkingSpace': (str, FieldInfo(description=f"Space to think about the general themes of the questions before you answer them, given your personality."))}
+    answer_attrs = {f'Answer{i+1}': (question_enum, FieldInfo(description=f"Answer to the question \"{question_enum.__name__}\"")) for i, question_enum in enumerate(enums)}
+    attrs = chain_of_thought_attrs | answer_attrs
     quiz_model = create_model("QuizAnswers", **attrs)
     return quiz_model
 
@@ -45,8 +47,11 @@ async def answer_questions(quiz_json, llm, prompt, character_description, exampl
             'example': example
         }
     )
+    print(llm_response.ThinkingSpace)
 
-    answers_in_order = [x[1]._value_ for x in llm_response]
+    answer_objects = [x for x in llm_response][1:]
+    answers_in_order = [x[1]._value_ for x in answer_objects if not isinstance(x, str)]
+    print(answers_in_order)
     
     for i, question in enumerate(quiz_json):
         answer_list = question['answers']
@@ -66,13 +71,13 @@ async def answer_questions(quiz_json, llm, prompt, character_description, exampl
     return random.choice(max_results)
 
 async def calculate_title(character_description, class_quiz_json, aspect_quiz_json):
-    # llm = ChatAnthropic(model="claude-3-5-sonnet-20241022")
-    llm = ChatAnthropic(model="claude-3-opus-latest")
+    llm = ChatAnthropic(model="claude-3-5-sonnet-20241022")
+    # llm = ChatAnthropic(model="claude-3-opus-latest")
     async with aiofiles.open(f'prompts/quiz_answerer.md') as f:
         quiz_answerer_prompt_text = await f.read()
     quiz_answerer_prompt = ChatPromptTemplate([
         ('system', quiz_answerer_prompt_text),
-        ('user', '{questions}')
+        ('user', 'QUESTIONS:\n{questions}')
     ])
 
     class_example = None

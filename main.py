@@ -59,6 +59,7 @@ async def classpect(interaction: discord.Interaction, personality: str):
     try:
         result = await calculate_title(personality, class_quiz_json, aspect_quiz_json)
     except Exception as e:
+        print(e)
         await interaction.followup.send(f'```[ERROR] Skaian link temporarily disconnected. Please try again later.```')
         return
     if len(result) > 1800:
