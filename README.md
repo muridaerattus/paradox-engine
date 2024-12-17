@@ -6,7 +6,8 @@ This is a Discord bot for "classpecting" personalities, or giving them Titles fr
 
 A Title is composed of a class and an aspect. `aspects/` contains one Markdown file for each aspect:
 
-```blood.md
+```
+blood.md
 breath.md
 doom.md
 heart.md
@@ -17,11 +18,13 @@ mind.md
 rage.md
 space.md
 time.md
-void.md```
+void.md
+```
 
 `classes/` contains one Markdown file for each class:
 
-```bard.md
+```
+bard.md
 heir.md
 knight.md
 mage.md
@@ -32,7 +35,8 @@ rogue.md
 seer.md
 sylph.md
 thief.md
-witch.md```
+witch.md
+```
 
 Each of these files contains a description of the respective class or aspect. You can substitute whatever theories you find online for each file, though the author gave me written permission to republish them.
 
