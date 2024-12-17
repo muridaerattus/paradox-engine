@@ -4,6 +4,7 @@ from enum import Enum
 from pydantic import BaseModel, Field, ValidationError, create_model
 from pydantic.fields import FieldInfo
 from langchain_anthropic import ChatAnthropic
+from langchain_together import ChatTogether
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 
@@ -71,8 +72,10 @@ async def answer_questions(quiz_json, llm, prompt, character_description, exampl
     return random.choice(max_results)
 
 async def calculate_title(character_description, class_quiz_json, aspect_quiz_json):
-    llm = ChatAnthropic(model="claude-3-5-sonnet-20241022")
-    # llm = ChatAnthropic(model="claude-3-opus-latest")
+    llm = ChatTogether(model="meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo") # Good for diverse results. May not follow proper formatting all the time.
+    # llm = ChatTogether(model="meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo") # Better for diverse results, but a bit overkill.
+    # llm = ChatAnthropic(model="claude-3-5-sonnet-20241022") # Default; says "Rogue of Doom/Rage/Time" a lot.
+    # llm = ChatAnthropic(model="claude-3-opus-latest") # Overkill.
     async with aiofiles.open(f'prompts/quiz_answerer.md') as f:
         quiz_answerer_prompt_text = await f.read()
     quiz_answerer_prompt = ChatPromptTemplate([
@@ -108,6 +111,7 @@ async def calculate_title(character_description, class_quiz_json, aspect_quiz_js
         paradox_engine_prompt = await f.read()
 
     llm = ChatAnthropic(model='claude-3-5-sonnet-20241022')
+    #llm = ChatTogether(model="meta-llama/Llama-3.3-70B-Instruct-Turbo")
     prompt = ChatPromptTemplate([
         ('system', paradox_engine_prompt),
         ('user', f'{class_result} of {aspect_result}')
