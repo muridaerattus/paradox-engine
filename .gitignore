@@ -12,3 +12,5 @@ test.py
 uv.lock
 
 alembic.ini
+
+*.db
