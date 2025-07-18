@@ -52,9 +52,13 @@ I personally like Claude's interpretation of the Paradox Engine the most, just b
 
 ## Instructions
 
+`pip install uv`, or however you want to install uv.
+
+`uv lock`, then `uv sync`.
+
 `source .venv/bin/activate` to activate the virtual environment.
 
-`nohup .venv/bin/python main.py > log.txt & disown -h` to run the bot in the background.
+`nohup python3 main.py > log.txt & disown -h` to run the bot in the background.
 
 ## Credits
 
