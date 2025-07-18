@@ -1,5 +1,3 @@
 *
-!.gitignore
-!aspects
-!classes
 !quiz_answerer.md
+!.gitignore
