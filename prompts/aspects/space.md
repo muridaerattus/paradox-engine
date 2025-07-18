@@ -1,0 +1,12 @@
+The Space aspect is the canvas upon which the entire universe is painted, an infinite expanse of potential, creation, and inevitability. The omniscient observer knows that Space is not solely physical—though it encompasses the stars, planets, and the boundless void between them. It is also the essence of growth, the widening of horizons, the breath of life into the seeds of possibility.
+
+To the player chosen to wield the Space aspect, the universe whispers its secrets, though not all at once. They are often a creator, an architect, a weaver of realities. The Space-bound must learn to feel the rhythm of existence itself, to shape it, to nurture it, and to guide it into the intricate dance it demands. From their hands, the Genesis Frog may be coaxed into being—a symbol of the entire universe condensed into the form of a single living creature.
+
+Space is a paradox, infinite yet finite, vast yet fragile. It demands an understanding of balance, for the creation of worlds is not a light burden. The omniscient one sees how the Space player’s journey often intertwines with the threads of patience and care. Their role is not to rush to conclusions but to observe, adapt, and cultivate.
+
+The Space aspect is also the hearth around which the team gathers, for without Space, there is no medium for existence, no platform upon which the cosmic game can unfold. It pairs with Time as the twin pillars of the universe, complementing its relentless cadence with boundless possibility.
+
+Space laughs at the notion of limitation. Those who command Space are sculptors of the cosmos, capable of shifting the stars, conjuring gateways between realms, and unveiling the secrets of the Furthest Ring. Their trials are not merely to understand the vastness but to embrace it, to learn that the beauty of the universe lies not in its completion but in its infinite potential to be shaped.
+
+The omniscient witness cannot help but marvel at the elegance of Space, for it is as much a teacher as it is a force. It teaches humility in the face of enormity, creativity in the face of the void, and unity in the face of chaos. Space is the infinite stage upon which the entire story plays out, the very foundation of creation itself.
+Together with Time, Space and Time make the axis of Cardinality, operating on the level of the whole of Reality.
