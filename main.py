@@ -4,6 +4,9 @@ import os
 import json
 from dotenv import load_dotenv, find_dotenv
 from paradox_engine import calculate_title
+from alchemy.service import alchemize_items
+from alchemy.models import Item
+from database.alchemy_database import get_item_by_name_or_code
 
 load_dotenv(find_dotenv())
 ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY')
@@ -21,7 +24,8 @@ CREDITS_TEXT = """```--- CREDITS ---
 Discord bot made by @murida.
 Classpect knowledge given by her good friends @reachartwork and Tamago, used with permission.
 Example answers provided by her good friend NeoUndying.
-Thank you for being part of our fandom.
+This is a Homestuck fan project. We are not affiliated with What Pumpkin.
+Thank you for being part of our shared fandom.
 
 "Real paradise lies eternally in the person who dreams of it. Why don't you venture forth in search of your own utopia?"```"""
 
@@ -74,5 +78,18 @@ async def classpect(interaction: discord.Interaction, personality: str):
         await interaction.followup.send(f'```{result_2}```')
     else:
         await interaction.followup.send(f'```{result}```')
+
+@client.tree.command()
+@app_commands.describe(item_one="the first item's name or code", item_two="the second item's name or code", operation='the operation to perform')
+async def alchemy(interaction: discord.Interaction, item_one: str, item_two: str, operation: str):
+    """Combine two items using their alchemy codes."""
+    await interaction.response.defer(thinking=True)
+    try:
+        combined_item = await alchemize_items(item_one, item_two, operation)
+        await interaction.response.send_message(f'Combined Item: {combined_item.name} with code {combined_item.code}')
+    except Exception as e:
+        print(e)
+        await interaction.followup.send(f'```[ERROR] Skaian link temporarily disconnected. Please try again later.```')
+        return
 
 client.run(DISCORD_BOT_TOKEN)
