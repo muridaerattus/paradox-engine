@@ -17,6 +17,14 @@ aspect_quiz_json = json.load(open(ASPECT_QUIZ_FILENAME, 'r'))
 
 MY_GUILD = discord.Object(id=GUILD_ID)
 
+CREDITS_TEXT = """```--- CREDITS ---
+Discord bot made by @murida.
+Classpect knowledge given by her good friends @reachartwork and Tamago, used with permission.
+Example answers provided by her good friend NeoUndying.
+Thank you for being part of our fandom.
+
+"Real paradise lies eternally in the person who dreams of it. Why don't you venture forth in search of your own utopia?"```"""
+
 class MyClient(discord.Client):
     def __init__(self, *, intents: discord.Intents):
         super().__init__(intents=intents)
@@ -41,19 +49,19 @@ async def on_ready():
 @client.tree.command()
 async def credits(interaction: discord.Interaction):
     """Displays credits for the bot."""
-    credits_text = """```
-    Discord bot made by @murida.
-    Classpect knowledge given by her good friends @reachartwork and Tamago, used with permission.
-    Thank you for being part of our fandom.
-    ```"""
-    await interaction.response.send_message(credits_text)
+    await interaction.response.send_message(CREDITS_TEXT)
 
 @client.tree.command()
 @app_commands.describe(personality='the personality of your character')
 async def classpect(interaction: discord.Interaction, personality: str):
     """Given a personality, decide a Class and Aspect, along with corresponding powers in battle."""
     await interaction.response.defer(thinking=True)
-    result = await calculate_title(personality, class_quiz_json, aspect_quiz_json)
+    try:
+        result = await calculate_title(personality, class_quiz_json, aspect_quiz_json)
+    except Exception as e:
+        print(e)
+        await interaction.followup.send(f'```[ERROR] Skaian link temporarily disconnected. Please try again later.```')
+        return
     if len(result) > 1800:
         i = 1799
         while i > 0:

@@ -4,6 +4,7 @@ from enum import Enum
 from pydantic import BaseModel, Field, ValidationError, create_model
 from pydantic.fields import FieldInfo
 from langchain_anthropic import ChatAnthropic
+from langchain_together import ChatTogether
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 
@@ -16,7 +17,9 @@ async def quiz_to_model(quiz_json):
         ((answer['answer'], answer['answer']) for answer in question['answers']),
         type=str)
         for question in quiz_json]
-    attrs = {f'Answer{i+1}': (question, FieldInfo(description=f"Answer to the question \"{question.__name__}\"")) for i, question in enumerate(enums)}
+    chain_of_thought_attrs = {f'ThinkingSpace': (str, FieldInfo(description=f"Space to think about the general themes of the questions before you answer them, given your personality."))}
+    answer_attrs = {f'Answer{i+1}': (question_enum, FieldInfo(description=f"Answer to the question \"{question_enum.__name__}\"")) for i, question_enum in enumerate(enums)}
+    attrs = chain_of_thought_attrs | answer_attrs
     quiz_model = create_model("QuizAnswers", **attrs)
     return quiz_model
 
@@ -37,20 +40,19 @@ async def answer_questions(quiz_json, llm, prompt, character_description, exampl
     structured_llm = llm.with_structured_output(quiz_model)
     parser = PydanticOutputParser(pydantic_object=quiz_model)
     prompted_llm = prompt | structured_llm
-    try:
-        llm_response = await prompted_llm.ainvoke(
-            {
-                'character_description': character_description, 
-                'format_instructions': parser.get_format_instructions(),
-                'questions': question_list,
-                'example': example
-            }
-        )
-    except ValidationError as e:
-        print('Questions skipped due to validation error.')
-        raise e
+    llm_response = await prompted_llm.ainvoke(
+        {
+            'character_description': character_description, 
+            'format_instructions': parser.get_format_instructions(),
+            'questions': question_list,
+            'example': example
+        }
+    )
+    print(llm_response.ThinkingSpace)
 
-    answers_in_order = [x[1]._value_ for x in llm_response]
+    answer_objects = [x for x in llm_response][1:]
+    answers_in_order = [x[1]._value_ for x in answer_objects if not isinstance(x, str)]
+    print(answers_in_order)
     
     for i, question in enumerate(quiz_json):
         answer_list = question['answers']
@@ -70,13 +72,15 @@ async def answer_questions(quiz_json, llm, prompt, character_description, exampl
     return random.choice(max_results)
 
 async def calculate_title(character_description, class_quiz_json, aspect_quiz_json):
-    # llm = ChatAnthropic(model="claude-3-5-sonnet-20241022")
-    llm = ChatAnthropic(model="claude-3-opus-latest")
+    llm = ChatTogether(model="meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo") # Good for diverse results. May not follow proper formatting all the time.
+    # llm = ChatTogether(model="meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo") # Better for diverse results, but a bit overkill.
+    # llm = ChatAnthropic(model="claude-3-5-sonnet-20241022") # Default; says "Rogue of Doom/Rage/Time" a lot.
+    # llm = ChatAnthropic(model="claude-3-opus-latest") # Overkill.
     async with aiofiles.open(f'prompts/quiz_answerer.md') as f:
         quiz_answerer_prompt_text = await f.read()
     quiz_answerer_prompt = ChatPromptTemplate([
         ('system', quiz_answerer_prompt_text),
-        ('user', '{questions}')
+        ('user', 'QUESTIONS:\n{questions}')
     ])
 
     class_example = None
@@ -107,6 +111,7 @@ async def calculate_title(character_description, class_quiz_json, aspect_quiz_js
         paradox_engine_prompt = await f.read()
 
     llm = ChatAnthropic(model='claude-3-5-sonnet-20241022')
+    #llm = ChatTogether(model="meta-llama/Llama-3.3-70B-Instruct-Turbo")
     prompt = ChatPromptTemplate([
         ('system', paradox_engine_prompt),
         ('user', f'{class_result} of {aspect_result}')
