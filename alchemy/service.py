@@ -1,6 +1,6 @@
-from alchemy.models import Item, Operation, generate_alchemy_code
+from alchemy.models import Item, AlchemyCode, Operation, generate_alchemy_code
 from alchemy.operations import alchemy_and, alchemy_or
-from database.alchemy_database import get_item_by_name_or_code
+from database.alchemy_database import get_item_by_name_or_code, insert_item
 from langchain_together import ChatTogether
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -20,9 +20,9 @@ async def alchemize_items(item_1_name: str, item_2_name: str, operation: Operati
     item_2 = await get_item_by_name_or_code(item_2_name)
 
     if not item_1:
-        item_1 = await new_item(item_1_name, None)
+        item_1 = await new_item(item_1_name, None, None)
     if not item_2:
-        item_2 = await new_item(item_2_name, None)
+        item_2 = await new_item(item_2_name, None, None)
 
     name = await generate_item_name(item_1_name, item_2_name, operation)
     description = await generate_description(name, operation)
@@ -35,13 +35,13 @@ async def alchemize_items(item_1_name: str, item_2_name: str, operation: Operati
             combined_code = alchemy_or(item_1.code, item_2.code)
         case _:
             raise ValueError(f"Invalid operation: {operation}. Use 'and' or 'or'.")
+        
+    combined_item = await new_item(name, description, combined_code)
+    await insert_item(combined_item)
 
-    return Item(
-        name=name,
-        description=description, 
-        code=combined_code)
+    return combined_item
 
-async def new_item(name: str, description: str | None) -> Item:
+async def new_item(name: str, description: str | None, code: AlchemyCode | None) -> Item:
     """
     Create a new item with a unique alchemy code.
     
@@ -51,7 +51,9 @@ async def new_item(name: str, description: str | None) -> Item:
     """
     if not description:
         description = await generate_description(name)
-    return Item(name=name, description=description or "", code=generate_alchemy_code())
+    if not code:
+        code = generate_alchemy_code()
+    return Item(name=name, description=description or "", code=code)
 
 async def generate_item_name(name_1: str, name_2: str, operation: Operation) -> str:
     """
