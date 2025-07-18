@@ -50,7 +50,7 @@ async def new_item(name: str, description: str | None, code: AlchemyCode | None)
     :return: An Item instance with a generated alchemy code
     """
     if not description:
-        description = await generate_description(name)
+        description = await generate_description(name, None)
     if not code:
         code = generate_alchemy_code()
     return Item(name=name, description=description or "", code=code)
@@ -70,25 +70,27 @@ async def generate_item_name(name_1: str, name_2: str, operation: Operation) -> 
         item_name_prompt = await f.read()
     prompt = ChatPromptTemplate(
         ('system', item_name_prompt),
-        ('user', f'{name_1} {operation} {name_2}')
+        ('user', f'{name_1}, {name_2}, operation: {operation}')
     )
     llm_chain = prompt | llm | StrOutputParser()
     return await llm_chain.ainvoke()
 
-async def generate_description(name: str, operation: Operation) -> str:
+async def generate_description(name: str, operation: Operation | None) -> str:
     """
     Generate a description for the item based on its name.
     
     :param name: Name of the item
     :return: A generated description string
     """
+    if not operation:
+        operation = 'new item'
     llm = ChatTogether(model="meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo")
     item_description_prompt = None
     async with aiofiles.open(f'../prompts/item_description_generator.md') as f:
         item_description_prompt = await f.read()
     prompt = ChatPromptTemplate(
         ('system', item_description_prompt),
-        ('user', f'{name} {operation} description')
+        ('user', f'{name}, operation: {operation}')
     )
     llm_chain = prompt | llm | StrOutputParser()
     return await llm_chain.ainvoke()
