@@ -33,7 +33,6 @@ def binary_to_code(binary: AlchemyCodeBinary) -> AlchemyCode:
     return ''.join(binary_integer_to_code(b) for b in binary)
 
 def alchemy_and(code_1: AlchemyCode, code_2: AlchemyCode) -> AlchemyCode:
-    print(code_to_binary(code_1), code_to_binary(code_2))
     return binary_to_code([(b1 & b2) for b1, b2 in zip(code_to_binary(code_1), code_to_binary(code_2))])
 
 def alchemy_or(code_1: AlchemyCode, code_2: AlchemyCode) -> AlchemyCode:

@@ -39,6 +39,24 @@ async def get_item_by_name_or_code(name_or_code: str) -> Item | None:
             item = result.first()
             return item
         
+async def get_item_by_code(code: str) -> Item | None:
+    """
+    Retrieve an item by its alchemy code or formatted name.
+    
+    :param code: The code or name of the item to retrieve
+    :return: An Item instance if found, otherwise None
+    """
+    async with async_session as session:
+        async with session.begin():
+            result = await session.exec(
+                select(Item).where(
+                    (Item.code == code)
+                )
+            )
+        item = result.first()
+        return item
+        
+        
 async def insert_item(item: Item) -> Item:
     """
     Insert a new item into the database.

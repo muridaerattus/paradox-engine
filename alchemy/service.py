@@ -40,9 +40,9 @@ async def new_item(name: str) -> Item:
     :param description: Description of the item (optional)
     :return: An Item instance with a generated alchemy code
     """
-    description = await generate_description(name)
-    code = generate_alchemy_code()
     formatted_name = format_name(name)
+    description = await generate_description(formatted_name)
+    code = generate_alchemy_code()
     return Item(
         name=formatted_name,
         components=formatted_name,
@@ -127,4 +127,3 @@ async def generate_description(name: str) -> str:
     llm_chain = prompt | llm | StrOutputParser()
 
     return await llm_chain.ainvoke({})
-    

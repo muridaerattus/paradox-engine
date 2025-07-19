@@ -6,6 +6,7 @@ from dotenv import load_dotenv, find_dotenv
 from paradox_engine import calculate_title
 from alchemy.service import alchemize_items
 from alchemy.models import Operation
+from database.alchemy_database import get_item_by_code
 
 load_dotenv(find_dotenv())
 ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY')
@@ -87,6 +88,22 @@ async def alchemy(interaction: discord.Interaction, item_one: str, item_two: str
         operation_text = '&&' if operation == 'and' else '||'
         combined_item = await alchemize_items(item_one, item_two, operation)
         await interaction.followup.send(f"""```{item_one} {operation_text} {item_two}\nITEM: {combined_item.name}\nCODE: {combined_item.code}\nDESCRIPTION: {combined_item.description}```""")
+    except Exception as e:
+        print(e)
+        await interaction.followup.send('```[ERROR] Skaian link temporarily disconnected. Please try again later.```')
+        return
+    
+@client.tree.command()
+@app_commands.describe(item_one="item's alchemy code")
+async def captchalogue(interaction: discord.Interaction, code: str):
+    """Get an exicting item by its alchemy code."""
+    await interaction.response.defer(thinking=True)
+    try:
+        item = await get_item_by_code(code)
+        if not item:
+            await interaction.followup.send('```[WARNING] Item not found. Please check the code and try again.```')
+            return
+        await interaction.followup.send(f"""ITEM: {item.name}\nCODE: {item.code}\nDESCRIPTION: {item.description}```""")
     except Exception as e:
         print(e)
         await interaction.followup.send('```[ERROR] Skaian link temporarily disconnected. Please try again later.```')
