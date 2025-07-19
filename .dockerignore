@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+.env
+.env.*
+*.sqlite3
+*.sqlite
+*.log
+*.lock
+.idea/
+.vscode/
+.git/
+.gitignore
+alembic.ini

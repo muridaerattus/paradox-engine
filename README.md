@@ -1,8 +1,10 @@
 # Paradox Engine
 
-This is a Discord bot for "classpecting" personalities, or giving them Titles from the webcomic _Homestuck_. Here's the code for people who want to peek inside, though it's kind of useless without the prompts. Though all the data in the prompts was used with permission, out of respect to the original authors, I chose not to make them public. I preserved the directory structure so you could theoretically write your own prompts for each file.
+This is a Discord bot for "classpecting" personalities, or giving them Titles from the webcomic _Homestuck_. Here's the code for people who want to peek inside, though it's kind of useless without the prompts. Though all the data in the prompts was used with permission, out of respect to the original authors, I chose not to make the character example prompts public. I preserved the directory structure so you could theoretically write your own prompts for each file.
 
 ## Prompt Directory
+
+### Classpecting
 
 A Title is composed of a class and an aspect. `aspects/` contains one Markdown file for each aspect:
 
@@ -42,15 +44,21 @@ Each of these files contains a description of the respective class or aspect. Yo
 
 `quiz_answerer.md` answers a personality quiz as a given personality. This is the prompt that has been made public.
 
-The `quiz_answerer` uses example answers from `aspect_example.md` and `class_example.md` that contain a written personality description along with a set of answers corresponding to that personality.
+The `quiz_answerer` uses example answers from `aspect_example.md` and `class_example.md` that contain a written personality description along with a set of answers corresponding to that personality. These two prompts are kept private, out of respect to the original authors.
 
-Finally, `paradox_engine.md` describes the personality of the Paradox Engine, along with the instruction to write a justification for the Title along with the powers it may have, using data from the respective class and aspect .md files, and the personality given by the user.
+Finally, `paradox_engine.md` describes the personality of the Paradox Engine, along with the instruction to write a justification for the Title along with the powers it may have, using data from the respective class and aspect .md files, and the personality given by the user. I have made the structure and instructions for the prompt public, but kept the "personality" section for the Paradox Engine private, because I encourage you to make your own.
 
 ## LLM opinions
 
 I personally like Claude's interpretation of the Paradox Engine the most, just because other LLMs manage to somehow be simultaneously too unstructured and too boring. However, Llama-70B produces the most variation in quiz-answering, leading to more interesting classpect results. Opus or the 403B/405B Llama models are overkill, Sonnet works well enough for both.
 
 ## Instructions
+
+### Docker
+
+Working on it.
+
+### Manual
 
 `pip install uv`, or however you want to install uv.
 
