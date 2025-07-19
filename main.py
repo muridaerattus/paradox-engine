@@ -5,8 +5,6 @@ import json
 from dotenv import load_dotenv, find_dotenv
 from paradox_engine import calculate_title
 from alchemy.service import alchemize_items
-from alchemy.models import Item
-from database.alchemy_database import get_item_by_name_or_code
 
 load_dotenv(find_dotenv())
 ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY')
@@ -64,7 +62,7 @@ async def classpect(interaction: discord.Interaction, personality: str):
         result = await calculate_title(personality, class_quiz_json, aspect_quiz_json)
     except Exception as e:
         print(e)
-        await interaction.followup.send(f'```[ERROR] Skaian link temporarily disconnected. Please try again later.```')
+        await interaction.followup.send('```[ERROR] Skaian link temporarily disconnected. Please try again later.```')
         return
     if len(result) > 1800:
         i = 1799
@@ -89,7 +87,7 @@ async def alchemy(interaction: discord.Interaction, item_one: str, item_two: str
         await interaction.followup.send(f'Combined Item: {combined_item.name} with code {combined_item.code}')
     except Exception as e:
         print(e)
-        await interaction.followup.send(f'```[ERROR] Skaian link temporarily disconnected. Please try again later.```')
+        await interaction.followup.send('```[ERROR] Skaian link temporarily disconnected. Please try again later.```')
         return
 
 client.run(DISCORD_BOT_TOKEN)

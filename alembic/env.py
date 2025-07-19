@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
-from sqlmodel import SQLModel
 
 from alchemy.models import Item
 

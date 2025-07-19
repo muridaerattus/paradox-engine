@@ -1,5 +1,5 @@
 from pydantic.types import StringConstraints
-from typing import NewType, Annotated, Literal
+from typing import Annotated, Literal
 import random
 import string
 from sqlmodel import SQLModel, Field
@@ -19,6 +19,6 @@ class Item(SQLModel, table=True):
     description: str = Field(..., description="Description of the item")
 
 class ItemNameAndDescription(SQLModel):
-    thinking_space: str = Field(description=f"Space to think about the item's name and description")
+    thinking_space: str = Field(description="Space to think about the item's name and description")
     name: str = Field(..., description="Final name of the item")
     description: str = Field(..., description="Final description of the item")

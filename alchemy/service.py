@@ -1,4 +1,4 @@
-from alchemy.models import Item, ItemNameAndDescription, AlchemyCode, Operation, generate_alchemy_code
+from alchemy.models import Item, ItemNameAndDescription, Operation, generate_alchemy_code
 from alchemy.operations import alchemy_and, alchemy_or
 from database.alchemy_database import get_item_by_name_or_code, insert_item
 from langchain_together import ChatTogether
@@ -40,10 +40,8 @@ async def new_item(name: str) -> Item:
     :param description: Description of the item (optional)
     :return: An Item instance with a generated alchemy code
     """
-    if not description:
-        description = await generate_description(name)
-    if not code:
-        code = generate_alchemy_code()
+    description = await generate_description(name)
+    code = generate_alchemy_code()
     return Item(name=name, description=description or "", code=code)
 
 async def generate_item(item_1: Item, item_2: Item, operation: Operation) -> Item:
@@ -56,7 +54,7 @@ async def generate_item(item_1: Item, item_2: Item, operation: Operation) -> Ite
     :return: A generated name string
     """
     item_name_prompt = None
-    async with aiofiles.open(f'prompts/alchemy/item_generator.md') as f:
+    async with aiofiles.open('prompts/alchemy/item_generator.md') as f:
         item_name_prompt = await f.read()
     
     prompt = ChatPromptTemplate([
@@ -102,7 +100,7 @@ async def generate_description(name: str) -> str:
     :return: A generated description string
     """    
     item_description_prompt = None
-    async with aiofiles.open(f'prompts/alchemy/item_description_generator.md') as f:
+    async with aiofiles.open('prompts/alchemy/item_description_generator.md') as f:
         item_description_prompt = await f.read()
     
     prompt = ChatPromptTemplate([
