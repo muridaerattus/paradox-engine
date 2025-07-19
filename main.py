@@ -84,12 +84,9 @@ async def alchemy(interaction: discord.Interaction, item_one: str, item_two: str
     """Combine two items using their alchemy codes."""
     await interaction.response.defer(thinking=True)
     try:
+        operation_text = '&&' if operation == 'and' else '||'
         combined_item = await alchemize_items(item_one, item_two, operation)
-        await interaction.followup.send(f"""
-                                        ```
-                                        ITEM: {combined_item.name}
-                                        CODE: {combined_item.code}
-                                        DESCRIPTION: {combined_item.description}```""")
+        await interaction.followup.send(f"""```{item_one} {operation_text} {item_two}\nITEM: {combined_item.name}\nCODE: {combined_item.code}\nDESCRIPTION: {combined_item.description}```""")
     except Exception as e:
         print(e)
         await interaction.followup.send('```[ERROR] Skaian link temporarily disconnected. Please try again later.```')
