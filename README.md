@@ -58,6 +58,8 @@ I personally like Claude's interpretation of the Paradox Engine the most, just b
 
 Working on it.
 
+It's about the same amount of work to update, but at least I can start and stop it in the background.
+
 ### Manual
 
 `pip install uv`, or however you want to install uv.
