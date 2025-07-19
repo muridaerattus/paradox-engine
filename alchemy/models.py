@@ -17,3 +17,8 @@ class Item(SQLModel, table=True):
     code: AlchemyCode = Field(default_factory=generate_alchemy_code, description="8 character alchemy code")
     name: str = Field(..., description="Name of the item")
     description: str = Field(..., description="Description of the item")
+
+class ItemNameAndDescription(SQLModel):
+    thinking_space: str = Field(description=f"Space to think about the item's name and description")
+    name: str = Field(..., description="Final name of the item")
+    description: str = Field(..., description="Final description of the item")
