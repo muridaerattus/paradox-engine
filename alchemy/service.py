@@ -1,6 +1,6 @@
 from alchemy.models import Item, ItemNameAndDescription, Operation, generate_alchemy_code, format_name
 from alchemy.operations import alchemy_and, alchemy_or
-from database.alchemy_database import get_item_by_name_or_code, insert_item
+from database.alchemy_database import get_item_by_name_or_code, get_item_by_code, insert_item
 from langchain_together import ChatTogether
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser, PydanticOutputParser
@@ -58,6 +58,22 @@ async def generate_item(item_1: Item, item_2: Item, operation: Operation) -> Ite
     :param operation: The operation used ('and' or 'or')
     :return: A generated name string
     """
+    combined_code = None
+    combined_components = None
+    match operation:
+        case 'and':
+            combined_code = alchemy_and(item_1.code, item_2.code)
+            combined_components = f"({item_1.components}) && ({item_2.components})"
+        case 'or':
+            combined_code = alchemy_or(item_1.code, item_2.code)
+            combined_components = f"({item_1.components}) || ({item_2.components})"
+        case _:
+            raise ValueError(f"Invalid operation: {operation}. Use 'and' or 'or'.")
+        
+    existing_item = await get_item_by_code(combined_code)
+    if existing_item:
+        return existing_item
+
     item_name_prompt = None
     async with aiofiles.open('prompts/alchemy/item_generator.md') as f:
         item_name_prompt = await f.read()
@@ -89,17 +105,6 @@ async def generate_item(item_1: Item, item_2: Item, operation: Operation) -> Ite
         'operation': operation,
         'format_instructions': format_instructions
     })
-    combined_code = None
-    combined_components = None
-    match operation:
-        case 'and':
-            combined_code = alchemy_and(item_1.code, item_2.code)
-            combined_components = f"({item_1.components}) && ({item_2.components})"
-        case 'or':
-            combined_code = alchemy_or(item_1.code, item_2.code)
-            combined_components = f"({item_1.components}) || ({item_2.components})"
-        case _:
-            raise ValueError(f"Invalid operation: {operation}. Use 'and' or 'or'.")
         
     return Item(
         code=combined_code,
