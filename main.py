@@ -23,7 +23,7 @@ MY_GUILD = discord.Object(id=GUILD_ID)
 CREDITS_TEXT = """```--- CREDITS ---
 Discord bot made by @murida.
 Classpect knowledge given by her good friends @reachartwork and Tamago, used with permission.
-Example answers provided by her good friend NeoUndying.
+Example answers provided by her good friend NeoUndying, used with permission.
 This is a Homestuck fan project. We are not affiliated with What Pumpkin.
 Thank you for being part of our shared fandom.
 
@@ -86,7 +86,7 @@ async def alchemy(interaction: discord.Interaction, item_one: str, item_two: str
     await interaction.response.defer(thinking=True)
     try:
         combined_item = await alchemize_items(item_one, item_two, operation)
-        await interaction.response.send_message(f'Combined Item: {combined_item.name} with code {combined_item.code}')
+        await interaction.followup.send(f'Combined Item: {combined_item.name} with code {combined_item.code}')
     except Exception as e:
         print(e)
         await interaction.followup.send(f'```[ERROR] Skaian link temporarily disconnected. Please try again later.```')

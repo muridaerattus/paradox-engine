@@ -25,6 +25,7 @@ async def alchemize_items(item_1_name: str, item_2_name: str, operation: Operati
         item_2 = await new_item(item_2_name, None, None)
 
     name = await generate_item_name(item_1_name, item_2_name, operation)
+    print(name)
     description = await generate_description(name, operation)
 
     combined_code = None
@@ -66,14 +67,14 @@ async def generate_item_name(name_1: str, name_2: str, operation: Operation) -> 
     """
     llm = ChatTogether(model="meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo")
     item_name_prompt = None
-    async with aiofiles.open(f'../prompts/alchemy/item_name_generator.md') as f:
+    async with aiofiles.open(f'prompts/alchemy/item_name_generator.md') as f:
         item_name_prompt = await f.read()
-    prompt = ChatPromptTemplate(
+    prompt = ChatPromptTemplate([
         ('system', item_name_prompt),
         ('user', f'{name_1}, {name_2}, operation: {operation}')
-    )
+    ])
     llm_chain = prompt | llm | StrOutputParser()
-    return await llm_chain.ainvoke()
+    return await llm_chain.ainvoke({})
 
 async def generate_description(name: str, operation: Operation | None) -> str:
     """
@@ -86,12 +87,12 @@ async def generate_description(name: str, operation: Operation | None) -> str:
         operation = 'new item'
     llm = ChatTogether(model="meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo")
     item_description_prompt = None
-    async with aiofiles.open(f'../prompts/alchemy/item_description_generator.md') as f:
+    async with aiofiles.open(f'prompts/alchemy/item_description_generator.md') as f:
         item_description_prompt = await f.read()
-    prompt = ChatPromptTemplate(
+    prompt = ChatPromptTemplate([
         ('system', item_description_prompt),
         ('user', f'{name}, operation: {operation}')
-    )
+    ])
     llm_chain = prompt | llm | StrOutputParser()
-    return await llm_chain.ainvoke()
+    return await llm_chain.ainvoke({})
     

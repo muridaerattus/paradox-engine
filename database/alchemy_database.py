@@ -12,6 +12,7 @@ DATABASE_LINK = os.environ.get('DATABASE_LINK')
 if not DATABASE_LINK:
     raise ValueError("DATABASE_LINK environment variable is not set.")
 engine = create_async_engine(DATABASE_LINK, echo=True)
+async_session = AsyncSession(engine, expire_on_commit=False)
 
 
 async def get_item_by_name_or_code(name_or_code: str) -> Item | None:
@@ -21,7 +22,7 @@ async def get_item_by_name_or_code(name_or_code: str) -> Item | None:
     :param name_or_code: The name or code of the item to retrieve
     :return: An Item instance if found, otherwise None
     """
-    async with AsyncSession(engine) as session:
+    async with async_session as session:
         async with session.begin():
             result = await session.exec(
                 select(Item).where(
@@ -44,7 +45,7 @@ async def insert_item(item: Item) -> Item:
     :param item: An Item instance to insert
     :return: The inserted Item instance
     """
-    async with AsyncSession(engine) as session:
+    async with async_session as session:
         async with session.begin():
             session.add(item)
             await session.commit()
