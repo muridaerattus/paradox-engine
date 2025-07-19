@@ -16,9 +16,6 @@ async def alchemize_items(item_1_name: str, item_2_name: str, operation: Operati
     :return: A new Item instance with a combined alchemy code
     """
 
-    item_1_name = format_name(item_1_name)
-    item_2_name = format_name(item_2_name)
-
     item_1 = await get_item_by_name_or_code(item_1_name)
     item_2 = await get_item_by_name_or_code(item_2_name)
 

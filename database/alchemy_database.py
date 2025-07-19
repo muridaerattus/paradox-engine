@@ -1,5 +1,5 @@
 from dotenv import load_dotenv, find_dotenv
-from alchemy.models import Item
+from alchemy.models import Item, format_name
 import os
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -30,6 +30,7 @@ async def get_item_by_name_or_code(name_or_code: str) -> Item | None:
                 )
             )
             if not result:
+                name_or_code = format_name(name_or_code)
                 result = await session.exec(
                     select(Item).where(
                         (Item.name == name_or_code)
