@@ -9,6 +9,8 @@ def code_to_binary_int(char: str) -> int:
         return ord(char) - ord('a') + 36
     elif char in "!?":
         return 62 if char == '?' else 63
+    else:
+        raise ValueError(f"Invalid character in alchemy code: {char}")
 
 def binary_integer_to_code(binary_integer: int) -> str:
     if binary_integer < 10:
@@ -21,6 +23,8 @@ def binary_integer_to_code(binary_integer: int) -> str:
         return '?'
     elif binary_integer == 63:
         return '!'
+    else:
+        raise ValueError(f"Invalid binary integer for alchemy code: {binary_integer}")
 
 def code_to_binary(code: AlchemyCode) -> AlchemyCodeBinary:
     return [code_to_binary_int(char) for char in code]
