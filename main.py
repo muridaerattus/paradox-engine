@@ -5,6 +5,7 @@ import json
 from dotenv import load_dotenv, find_dotenv
 from paradox_engine import calculate_title
 from alchemy.service import alchemize_items
+from alchemy.models import Operation
 
 load_dotenv(find_dotenv())
 ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY')
@@ -79,12 +80,16 @@ async def classpect(interaction: discord.Interaction, personality: str):
 
 @client.tree.command()
 @app_commands.describe(item_one="the first item's name or code", item_two="the second item's name or code", operation='the operation to perform')
-async def alchemy(interaction: discord.Interaction, item_one: str, item_two: str, operation: str):
+async def alchemy(interaction: discord.Interaction, item_one: str, item_two: str, operation: Operation):
     """Combine two items using their alchemy codes."""
     await interaction.response.defer(thinking=True)
     try:
         combined_item = await alchemize_items(item_one, item_two, operation)
-        await interaction.followup.send(f'Combined Item: {combined_item.name} with code {combined_item.code}')
+        await interaction.followup.send(f"""
+                                        ```
+                                        ITEM: {combined_item.name}
+                                        CODE: {combined_item.code}
+                                        DESCRIPTION: {combined_item.description}```""")
     except Exception as e:
         print(e)
         await interaction.followup.send('```[ERROR] Skaian link temporarily disconnected. Please try again later.```')

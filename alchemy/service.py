@@ -1,4 +1,4 @@
-from alchemy.models import Item, ItemNameAndDescription, Operation, generate_alchemy_code
+from alchemy.models import Item, ItemNameAndDescription, Operation, generate_alchemy_code, format_name
 from alchemy.operations import alchemy_and, alchemy_or
 from database.alchemy_database import get_item_by_name_or_code, insert_item
 from langchain_together import ChatTogether
@@ -15,6 +15,9 @@ async def alchemize_items(item_1_name: str, item_2_name: str, operation: Operati
     :param operation: The operation to perform ('and' or 'or')
     :return: A new Item instance with a combined alchemy code
     """
+
+    item_1_name = format_name(item_1_name)
+    item_2_name = format_name(item_2_name)
 
     item_1 = await get_item_by_name_or_code(item_1_name)
     item_2 = await get_item_by_name_or_code(item_2_name)
@@ -42,7 +45,12 @@ async def new_item(name: str) -> Item:
     """
     description = await generate_description(name)
     code = generate_alchemy_code()
-    return Item(name=name, description=description or "", code=code)
+    formatted_name = format_name(name)
+    return Item(
+        name=formatted_name,
+        components=formatted_name,
+        description=description or "",
+        code=code)
 
 async def generate_item(item_1: Item, item_2: Item, operation: Operation) -> Item:
     """
@@ -60,8 +68,13 @@ async def generate_item(item_1: Item, item_2: Item, operation: Operation) -> Ite
     prompt = ChatPromptTemplate([
         ('system', item_name_prompt),
         ('user', """
-         Item 1: {item_1_name}, {item_1_description}
-         Item 2: {item_2.name}, {item_2.description}
+         Item 1: {item_1_name}
+         Item 1 Components: {item_1_components}
+         Item 1 Description: {item_1_description}
+         
+         Item 2: {item_2_name}
+         Item 2 Components: {item_2_components}
+         Item 2 Description: {item_2_description}
          Operation: {operation}""")
     ])
     llm = ChatTogether(model="meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo")
@@ -71,23 +84,29 @@ async def generate_item(item_1: Item, item_2: Item, operation: Operation) -> Ite
 
     item_name_and_description: ItemNameAndDescription = await llm_chain.ainvoke({
         'item_1_name': item_1.name,
+        'item_1_components': item_1.components,
         'item_1_description': item_1.description,
         'item_2_name': item_2.name,
+        'item_2_components': item_2.components,
         'item_2_description': item_2.description,
         'operation': operation,
         'format_instructions': format_instructions
     })
     combined_code = None
+    combined_components = None
     match operation:
         case 'and':
             combined_code = alchemy_and(item_1.code, item_2.code)
+            combined_components = f"({item_1.components}) && ({item_2.components})"
         case 'or':
             combined_code = alchemy_or(item_1.code, item_2.code)
+            combined_components = f"({item_1.components}) || ({item_2.components})"
         case _:
             raise ValueError(f"Invalid operation: {operation}. Use 'and' or 'or'.")
         
     return Item(
         code=combined_code,
+        components=combined_components,
         name=item_name_and_description.name,
         description=item_name_and_description.description
     )

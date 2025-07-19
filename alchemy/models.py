@@ -12,9 +12,14 @@ def generate_alchemy_code() -> str:
     chars = string.ascii_letters + string.digits + "!?"
     return ''.join(random.choices(chars, k=8))
 
+def format_name(name: str) -> str:
+    """'this is an item name' -> 'This Is An Item Name'"""
+    return ' '.join(word.capitalize() for word in name.split())
+
 class Item(SQLModel, table=True):
     id: int = Field(..., description="", primary_key=True)
     code: AlchemyCode = Field(default_factory=generate_alchemy_code, description="8 character alchemy code")
+    components: str = Field(default="", description="Chain of components used to create this item")
     name: str = Field(..., description="Name of the item")
     description: str = Field(..., description="Description of the item")
 
