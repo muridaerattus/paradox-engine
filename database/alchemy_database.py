@@ -29,7 +29,9 @@ async def get_item_by_name_or_code(name_or_code: str) -> Item | None:
                     (Item.code == name_or_code)
                 )
             )
-            if not result:
+            item = result.first()
+            if result is None:
+                # If no item found by code, try by name
                 name_or_code = format_name(name_or_code)
                 result = await session.exec(
                     select(Item).where(

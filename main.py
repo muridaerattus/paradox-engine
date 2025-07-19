@@ -94,7 +94,7 @@ async def alchemy(interaction: discord.Interaction, item_one: str, item_two: str
         return
     
 @client.tree.command()
-@app_commands.describe(item_one="item's alchemy code")
+@app_commands.describe(code="item's alchemy code")
 async def captchalogue(interaction: discord.Interaction, code: str):
     """Get an exicting item by its alchemy code."""
     await interaction.response.defer(thinking=True)
@@ -103,7 +103,7 @@ async def captchalogue(interaction: discord.Interaction, code: str):
         if not item:
             await interaction.followup.send('```[WARNING] Item not found. Please check the code and try again.```')
             return
-        await interaction.followup.send(f"""ITEM: {item.name}\nCODE: {item.code}\nDESCRIPTION: {item.description}```""")
+        await interaction.followup.send(f"""```ITEM: {item.name}\nCODE: {item.code}\nDESCRIPTION: {item.description}```""")
     except Exception as e:
         print(e)
         await interaction.followup.send('```[ERROR] Skaian link temporarily disconnected. Please try again later.```')
