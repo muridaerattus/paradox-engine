@@ -56,6 +56,8 @@ I personally like Claude's interpretation of the Paradox Engine the most, just b
 
 `uv lock`, then `uv sync`.
 
+`uv run alembic upgrade head` to initialize the local database.
+
 `source .venv/bin/activate` to activate the virtual environment.
 
 `nohup python3 main.py > log.txt & disown -h` to run the bot in the background.
@@ -64,8 +66,10 @@ I personally like Claude's interpretation of the Paradox Engine the most, just b
 
 Classpect knowledge given by my good friends @reachartwork and Tamago, used with permission.
 
-Example answers provided by my good friend NeoUndying.
+Example answers provided by my good friend NeoUndying, used with permission.
 
-Thank you for being part of our fandom.
+This is a Homestuck fan project. We are not affiliated with What Pumpkin.
 
-"Imagination creates reality."
+Thank you for being part of our shared fandom.
+
+"Real paradise lies eternally in the person who dreams of it. Why don't you venture forth in search of your own utopia?"

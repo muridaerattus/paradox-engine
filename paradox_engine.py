@@ -1,7 +1,7 @@
 import aiofiles
 import random
 from enum import Enum
-from pydantic import BaseModel, Field, ValidationError, create_model
+from pydantic import create_model
 from pydantic.fields import FieldInfo
 from langchain_anthropic import ChatAnthropic
 from langchain_together import ChatTogether
@@ -17,7 +17,7 @@ async def quiz_to_model(quiz_json):
         ((answer['answer'], answer['answer']) for answer in question['answers']),
         type=str)
         for question in quiz_json]
-    chain_of_thought_attrs = {f'ThinkingSpace': (str, FieldInfo(description=f"Space to think about the general themes of the questions before you answer them, given your personality."))}
+    chain_of_thought_attrs = {'ThinkingSpace': (str, FieldInfo(description="Space to think about the general themes of the questions before you answer them, given your personality."))}
     answer_attrs = {f'Answer{i+1}': (question_enum, FieldInfo(description=f"Answer to the question \"{question_enum.__name__}\"")) for i, question_enum in enumerate(enums)}
     attrs = chain_of_thought_attrs | answer_attrs
     quiz_model = create_model("QuizAnswers", **attrs)
@@ -76,7 +76,7 @@ async def calculate_title(character_description, class_quiz_json, aspect_quiz_js
     # llm = ChatTogether(model="meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo") # Better for diverse results, but a bit overkill.
     # llm = ChatAnthropic(model="claude-3-5-sonnet-20241022") # Default; says "Rogue of Doom/Rage/Time" a lot.
     # llm = ChatAnthropic(model="claude-3-opus-latest") # Overkill.
-    async with aiofiles.open(f'prompts/quiz_answerer.md') as f:
+    async with aiofiles.open('prompts/quiz_answerer.md') as f:
         quiz_answerer_prompt_text = await f.read()
     quiz_answerer_prompt = ChatPromptTemplate([
         ('system', quiz_answerer_prompt_text),
@@ -85,9 +85,9 @@ async def calculate_title(character_description, class_quiz_json, aspect_quiz_js
 
     class_example = None
     aspect_example = None
-    async with aiofiles.open(f'prompts/class_example.md') as f:
+    async with aiofiles.open('prompts/class_example.md') as f:
         class_example = await f.read()
-    async with aiofiles.open(f'prompts/aspect_example.md') as f:
+    async with aiofiles.open('prompts/aspect_example.md') as f:
         aspect_example = await f.read()
 
     class_result = await answer_questions(class_quiz_json, llm, quiz_answerer_prompt, character_description, class_example)

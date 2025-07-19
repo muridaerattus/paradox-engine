@@ -4,6 +4,9 @@ import os
 import json
 from dotenv import load_dotenv, find_dotenv
 from paradox_engine import calculate_title
+from alchemy.service import alchemize_items
+from alchemy.models import Operation
+from database.alchemy_database import get_item_by_code
 
 load_dotenv(find_dotenv())
 ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY')
@@ -20,8 +23,9 @@ MY_GUILD = discord.Object(id=GUILD_ID)
 CREDITS_TEXT = """```--- CREDITS ---
 Discord bot made by @murida.
 Classpect knowledge given by her good friends @reachartwork and Tamago, used with permission.
-Example answers provided by her good friend NeoUndying.
-Thank you for being part of our fandom.
+Example answers provided by her good friend NeoUndying, used with permission.
+This is a Homestuck fan project. We are not affiliated with What Pumpkin.
+Thank you for being part of our shared fandom.
 
 "Real paradise lies eternally in the person who dreams of it. Why don't you venture forth in search of your own utopia?"```"""
 
@@ -60,7 +64,7 @@ async def classpect(interaction: discord.Interaction, personality: str):
         result = await calculate_title(personality, class_quiz_json, aspect_quiz_json)
     except Exception as e:
         print(e)
-        await interaction.followup.send(f'```[ERROR] Skaian link temporarily disconnected. Please try again later.```')
+        await interaction.followup.send('```[ERROR] Skaian link temporarily disconnected. Please try again later.```')
         return
     if len(result) > 1800:
         i = 1799
@@ -74,5 +78,35 @@ async def classpect(interaction: discord.Interaction, personality: str):
         await interaction.followup.send(f'```{result_2}```')
     else:
         await interaction.followup.send(f'```{result}```')
+
+@client.tree.command()
+@app_commands.describe(item_one="the first item's name or code", item_two="the second item's name or code", operation='the operation to perform')
+async def alchemy(interaction: discord.Interaction, item_one: str, item_two: str, operation: Operation):
+    """Combine two items using their alchemy codes."""
+    await interaction.response.defer(thinking=True)
+    try:
+        operation_text = '&&' if operation == 'and' else '||'
+        combined_item = await alchemize_items(item_one, item_two, operation)
+        await interaction.followup.send(f"""```{item_one} {operation_text} {item_two}\nITEM: {combined_item.name}\nCODE: {combined_item.code}\nDESCRIPTION: {combined_item.description}```""")
+    except Exception as e:
+        print(e)
+        await interaction.followup.send('```[ERROR] Skaian link temporarily disconnected. Please try again later.```')
+        return
+    
+@client.tree.command()
+@app_commands.describe(code="item's alchemy code")
+async def captchalogue(interaction: discord.Interaction, code: str):
+    """Get an exicting item by its alchemy code."""
+    await interaction.response.defer(thinking=True)
+    try:
+        item = await get_item_by_code(code)
+        if not item:
+            await interaction.followup.send('```[WARNING] Item not found. Please check the code and try again.```')
+            return
+        await interaction.followup.send(f"""```ITEM: {item.name}\nCODE: {item.code}\nDESCRIPTION: {item.description}```""")
+    except Exception as e:
+        print(e)
+        await interaction.followup.send('```[ERROR] Skaian link temporarily disconnected. Please try again later.```')
+        return
 
 client.run(DISCORD_BOT_TOKEN)

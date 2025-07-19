@@ -6,6 +6,11 @@ quiz_results.json
 
 .venv
 __pycache__/
+.pytest_cache/
 
 test.py
 uv.lock
+
+alembic.ini
+
+*.db
