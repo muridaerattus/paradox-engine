@@ -9,11 +9,10 @@ from alchemy.models import Operation
 from database.alchemy_database import get_item_by_code
 
 load_dotenv(find_dotenv())
-ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY')
 CLASS_QUIZ_FILENAME = os.environ.get('CLASS_QUIZ_FILENAME')
 ASPECT_QUIZ_FILENAME = os.environ.get('ASPECT_QUIZ_FILENAME')
 DISCORD_BOT_TOKEN = os.environ.get('DISCORD_BOT_TOKEN')
-GUILD_ID = os.environ.get('GUILD_ID')
+GUILD_ID = int(os.environ.get('GUILD_ID'))
 
 class_quiz_json = json.load(open(CLASS_QUIZ_FILENAME, 'r'))
 aspect_quiz_json = json.load(open(ASPECT_QUIZ_FILENAME, 'r'))

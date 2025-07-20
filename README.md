@@ -57,11 +57,12 @@ I personally like Claude's interpretation of the Paradox Engine the most, just b
 ### Docker
 
 ```
-docker run -e DATABASE_URL="sqlite+aiosqlite:///./paradox.db" \
---env-file path/to/your/env-file \
+docker run --env-file path/to/your/env-file \
 -v /path/to/your/prompts/aspect_example.md:/app/prompts/aspect_example.md \
 -v /path/to/your/prompts/class_example.md:/app/prompts/class_example.md \
 -v /path/to/your/prompts/paradox_engine.md:/app/prompts/paradox_engine.md \
+-v /path/to/quiz/class_quiz.json:/app/class_quiz.json \
+-v /path/to/quiz/aspect_quiz.json:/app/aspect_quiz.json \
 paradox-engine
 ```
 

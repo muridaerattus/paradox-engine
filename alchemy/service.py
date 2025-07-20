@@ -4,6 +4,7 @@ from database.alchemy_database import get_item_by_name_or_code, get_item_by_code
 from langchain_together import ChatTogether
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser, PydanticOutputParser
+from settings import PROMPTS_DIRECTORY
 import aiofiles
 
 async def alchemize_items(item_1_name: str, item_2_name: str, operation: Operation) -> Item:
@@ -75,7 +76,7 @@ async def generate_item(item_1: Item, item_2: Item, operation: Operation) -> Ite
         return existing_item
 
     item_name_prompt = None
-    async with aiofiles.open('prompts/alchemy/item_generator.md') as f:
+    async with aiofiles.open(f'{PROMPTS_DIRECTORY}/alchemy/item_generator.md') as f:
         item_name_prompt = await f.read()
     
     prompt = ChatPromptTemplate([
@@ -121,7 +122,7 @@ async def generate_description(name: str) -> str:
     :return: A generated description string
     """    
     item_description_prompt = None
-    async with aiofiles.open('prompts/alchemy/item_description_generator.md') as f:
+    async with aiofiles.open(f'{PROMPTS_DIRECTORY}/alchemy/item_description_generator.md') as f:
         item_description_prompt = await f.read()
     
     prompt = ChatPromptTemplate([
