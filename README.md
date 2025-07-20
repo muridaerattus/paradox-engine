@@ -75,6 +75,8 @@ It's about the same amount of work to update, but at least I can start and stop 
 
 `uv run alembic upgrade head` to initialize the local database.
 
+`uv run -m scripts.preload_objects` to preload some basic objects and easter eggs.
+
 `source .venv/bin/activate` to activate the virtual environment.
 
 `nohup python3 main.py > log.txt & disown -h` to run the bot in the background.
