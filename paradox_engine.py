@@ -7,6 +7,10 @@ from langchain_anthropic import ChatAnthropic
 from langchain_together import ChatTogether
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 async def format_answer_string(s: str):
     return s.lower().replace('.', '').replace('"', '')
@@ -48,11 +52,11 @@ async def answer_questions(quiz_json, llm, prompt, character_description, exampl
             'example': example
         }
     )
-    print(llm_response.ThinkingSpace)
+    logger.info(llm_response.ThinkingSpace)
 
     answer_objects = [x for x in llm_response][1:]
     answers_in_order = [x[1]._value_ for x in answer_objects if not isinstance(x, str)]
-    print(answers_in_order)
+    logger.info(answers_in_order)
     
     for i, question in enumerate(quiz_json):
         answer_list = question['answers']
@@ -62,20 +66,21 @@ async def answer_questions(quiz_json, llm, prompt, character_description, exampl
         personality_types = answers_by_text[answer]
         for result in personality_types:
             result_scores[result] += 1
-        print(f"{question['question']}: {answer}")
+        logger.info(f"{question['question']}: {answer}")
 
-    print(result_scores)
+    logger.info(result_scores)
     
     max_score = max(result_scores.values())
     max_results = [res for res in result_scores if result_scores[res] == max_score]
-    print(max_results)
+    logger.info(max_results)
     return random.choice(max_results)
 
 async def calculate_title(character_description, class_quiz_json, aspect_quiz_json):
-    llm = ChatTogether(model="meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo") # Good for diverse results. May not follow proper formatting all the time.
+    # llm = ChatTogether(model="meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo") # Good for diverse results. May not follow proper formatting all the time.
     # llm = ChatTogether(model="meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo") # Better for diverse results, but a bit overkill.
     # llm = ChatAnthropic(model="claude-3-5-sonnet-20241022") # Default; says "Rogue of Doom/Rage/Time" a lot.
     # llm = ChatAnthropic(model="claude-3-opus-latest") # Overkill.
+    llm = ChatAnthropic(model="claude-3-7-sonnet-latest") # Untested.
     async with aiofiles.open('prompts/quiz_answerer.md') as f:
         quiz_answerer_prompt_text = await f.read()
     quiz_answerer_prompt = ChatPromptTemplate([
@@ -96,7 +101,7 @@ async def calculate_title(character_description, class_quiz_json, aspect_quiz_js
     class_result = class_result.split(' ')[0].capitalize()
     aspect_result = aspect_result.capitalize()
 
-    print(f"Final answer: {class_result} of {aspect_result}")
+    logger.info(f"Final answer: {class_result} of {aspect_result}")
 
     # retrieve class and aspect summaries
     class_prompt = None
@@ -110,7 +115,7 @@ async def calculate_title(character_description, class_quiz_json, aspect_quiz_js
     async with aiofiles.open('prompts/paradox_engine.md') as f:
         paradox_engine_prompt = await f.read()
 
-    llm = ChatAnthropic(model='claude-3-5-sonnet-20241022')
+    llm = ChatAnthropic(model='claude-3-7-sonnet-latest')
     #llm = ChatTogether(model="meta-llama/Llama-3.3-70B-Instruct-Turbo")
     prompt = ChatPromptTemplate([
         ('system', paradox_engine_prompt),

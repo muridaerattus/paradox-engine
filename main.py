@@ -6,6 +6,7 @@ from alchemy.service import alchemize_items
 from alchemy.models import Operation
 from database.alchemy_database import get_item_by_code
 from settings import CLASS_QUIZ_FILENAME, ASPECT_QUIZ_FILENAME, GUILD_ID, DISCORD_BOT_TOKEN
+import logging
 
 class_quiz_json = json.load(open(CLASS_QUIZ_FILENAME, 'r'))
 aspect_quiz_json = json.load(open(ASPECT_QUIZ_FILENAME, 'r'))
@@ -20,6 +21,9 @@ This is a Homestuck fan project. We are not affiliated with What Pumpkin.
 Thank you for being part of our shared fandom.
 
 "Real paradise lies eternally in the person who dreams of it. Why don't you venture forth in search of your own utopia?"```"""
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class MyClient(discord.Client):
     def __init__(self, *, intents: discord.Intents):
@@ -39,8 +43,8 @@ client = MyClient(intents=intents)
 
 @client.event
 async def on_ready():
-    print(f'Logged in as {client.user} (ID: {client.user.id})')
-    print('------')
+    logger.info(f'Logged in as {client.user} (ID: {client.user.id})')
+    logger.info('------')
 
 @client.tree.command()
 async def credits(interaction: discord.Interaction):
@@ -55,7 +59,7 @@ async def classpect(interaction: discord.Interaction, personality: str):
     try:
         result = await calculate_title(personality, class_quiz_json, aspect_quiz_json)
     except Exception as e:
-        print(e)
+        logger.error(e)
         await interaction.followup.send('```[ERROR] Skaian link temporarily disconnected. Please try again later.```')
         return
     if len(result) > 1800:
@@ -81,7 +85,7 @@ async def alchemy(interaction: discord.Interaction, item_one: str, item_two: str
         combined_item = await alchemize_items(item_one, item_two, operation)
         await interaction.followup.send(f"""```{item_one} {operation_text} {item_two}\nITEM: {combined_item.name}\nCODE: {combined_item.code}\nDESCRIPTION: {combined_item.description}```""")
     except Exception as e:
-        print(e)
+        logger.error(e)
         await interaction.followup.send('```[ERROR] Skaian link temporarily disconnected. Please try again later.```')
         return
     
@@ -97,7 +101,7 @@ async def captchalogue(interaction: discord.Interaction, code: str):
             return
         await interaction.followup.send(f"""```ITEM: {item.name}\nCODE: {item.code}\nDESCRIPTION: {item.description}```""")
     except Exception as e:
-        print(e)
+        logger.error(e)
         await interaction.followup.send('```[ERROR] Skaian link temporarily disconnected. Please try again later.```')
         return
 
