@@ -14,3 +14,4 @@ __pycache__/
 .git/
 .gitignore
 alembic.ini
+prompts/
