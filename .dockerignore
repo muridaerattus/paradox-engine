@@ -15,3 +15,6 @@ __pycache__/
 .gitignore
 alembic.ini
 prompts/
+aspect_quiz.json
+class_quiz.json
+quiz_results.json
