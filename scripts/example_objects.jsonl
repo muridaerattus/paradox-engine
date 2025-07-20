@@ -46,3 +46,9 @@
     "components": "(Red Sucker) || (Green Sucker)",
     "description": "A large lollipop with swirls of red and green. You are compelled to lick it...."
 }
+{
+    "name": "Captchalogue Card",
+    "code": "11111111",
+    "components": "Captchalogue Card",
+    "description": "A card that can hold any item you captchalogue. Each item has a unique code that identifies it on the back."
+}
