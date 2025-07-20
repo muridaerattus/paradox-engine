@@ -56,7 +56,14 @@ I personally like Claude's interpretation of the Paradox Engine the most, just b
 
 ### Docker
 
-`docker run -e DATABASE_URL="sqlite+aiosqlite:///./paradox.db" -v /path/to/your/prompts:/app/prompts paradox-engine`
+```
+docker run -e DATABASE_URL="sqlite+aiosqlite:///./paradox.db" \
+--env-file path/to/your/env-file \
+-v /path/to/your/prompts/aspect_example.md:/app/prompts/aspect_example.md \
+-v /path/to/your/prompts/class_example.md:/app/prompts/class_example.md \
+-v /path/to/your/prompts/paradox_engine.md:/app/prompts/paradox_engine.md \
+paradox-engine
+```
 
 It's about the same amount of work to update, but at least I can start and stop it in the background.
 
