@@ -2,7 +2,7 @@ aspect_quiz.json
 class_quiz.json
 quiz_results.json
 
-.env
+*.env
 
 .venv
 __pycache__/

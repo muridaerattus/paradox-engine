@@ -1,0 +1,58 @@
+{
+    "items": [
+        {
+            "name": "Perfectly Generic Object",
+            "code": "00000000",
+            "components": "Perfectly Generic Object",
+            "description": "It's a perfectly generic object in all respects. You feel absolutely nothing. And that's the point."
+        },
+        {
+            "name": "Shard of Everything",
+            "code": "!!!!!!!!",
+            "components": "Shard of Everything",
+            "description": "Every property, every purpose. Especially the ones you didn't ask for."
+        },
+        {
+            "name": "Rocket Pack",
+            "code": "PCHOOOOO",
+            "components": "Rocket Pack",
+            "description": "It's a jetpack. Use with caution, as it may cause you to fly into the sun or something."
+        },
+        {
+            "name": "Rocket Shoes",
+            "code": "pshoooes",
+            "components": "Rocket Shoes",
+            "description": "Jetpacks for your feet! Not approved by the FAA, but who cares about that? Not you, that's for sure."
+        },
+        {
+            "name": "Red Sucker",
+            "code": "uROBuROS",
+            "components": "Red Sucker",
+            "description": "A large, bright red lollipop. Only one of it can exist at a time across all universes."
+        },
+        {
+            "name": "Green Sucker",
+            "code": "UrobUros",
+            "components": "Green Sucker",
+            "description": "A large, bright green lollipop. Only one of it can exist at a time across all universes."
+        },
+        {
+            "name": "Lollipop",
+            "code": "OHG1OHGK",
+            "components": "(Red Sucker) && (Green Sucker)",
+            "description": "It's just a lollipop. Maybe you should try OR instead of AND?"
+        },
+        {
+            "name": "Spiral Sucker",
+            "code": "?!wl?!w?",
+            "components": "(Red Sucker) || (Green Sucker)",
+            "description": "A large lollipop with swirls of red and green. You are compelled to lick it...."
+        },
+        {
+            "name": "Captchalogue Card",
+            "code": "11111111",
+            "components": "Captchalogue Card",
+            "description": "A card that can hold any item you captchalogue. Each item has a unique code that identifies it on the back."
+        }
+    ]
+}

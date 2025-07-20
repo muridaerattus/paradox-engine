@@ -8,10 +8,10 @@ from sqlmodel import select
 
 load_dotenv(find_dotenv())
 
-DATABASE_LINK = os.environ.get('DATABASE_LINK')
-if not DATABASE_LINK:
-    raise ValueError("DATABASE_LINK environment variable is not set.")
-engine = create_async_engine(DATABASE_LINK, echo=True)
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable is not set.")
+engine = create_async_engine(DATABASE_URL, echo=True)
 async_session = AsyncSession(engine, expire_on_commit=False)
 
 
