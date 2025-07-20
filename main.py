@@ -1,18 +1,11 @@
 import discord
 from discord import app_commands
-import os
 import json
-from dotenv import load_dotenv, find_dotenv
 from paradox_engine import calculate_title
 from alchemy.service import alchemize_items
 from alchemy.models import Operation
 from database.alchemy_database import get_item_by_code
-
-load_dotenv(find_dotenv())
-CLASS_QUIZ_FILENAME = os.environ.get('CLASS_QUIZ_FILENAME')
-ASPECT_QUIZ_FILENAME = os.environ.get('ASPECT_QUIZ_FILENAME')
-DISCORD_BOT_TOKEN = os.environ.get('DISCORD_BOT_TOKEN')
-GUILD_ID = int(os.environ.get('GUILD_ID'))
+from settings import CLASS_QUIZ_FILENAME, ASPECT_QUIZ_FILENAME, GUILD_ID, DISCORD_BOT_TOKEN
 
 class_quiz_json = json.load(open(CLASS_QUIZ_FILENAME, 'r'))
 aspect_quiz_json = json.load(open(ASPECT_QUIZ_FILENAME, 'r'))

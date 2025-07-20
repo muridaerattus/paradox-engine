@@ -1,3 +1,4 @@
+import asyncio
 from database.alchemy_database import insert_item
 from alchemy.models import Item
 import json
@@ -22,3 +23,6 @@ async def preload_objects():
                     description=item_data['description']
                 )
                 await insert_item(item)
+
+if __name__ == "__main__":
+    asyncio.run(preload_objects())

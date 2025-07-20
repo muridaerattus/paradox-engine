@@ -10,5 +10,9 @@ if [ -f alembic.ini ] || [ -f alembic.ini.example ]; then
   uv run alembic upgrade head
 fi
 
+touch paradox.db
+
+uv run preload_objects.py
+
 # Start the bot
 uv run main.py
