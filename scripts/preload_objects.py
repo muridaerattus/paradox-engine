@@ -1,5 +1,5 @@
 import asyncio
-from database.alchemy_database import insert_item
+from database.alchemy_database import insert_item, get_item_by_code
 from alchemy.models import Item
 import json
 
@@ -7,22 +7,24 @@ async def preload_objects():
     """
     Preload example objects into the database.
 
-    This function reads example objects from a JSONL file and inserts them into the database
+    This function reads example objects from a JSON file and inserts them into the database
     only if they do not already exist.
     """
-    with open('scripts/example_objects.jsonl', 'r') as file:
-        for line in file:
-            item_data = json.loads(line)
+    with open('scripts/example_objects.json', 'r') as file:
+        item_data = json.load(file)
+        item_data = item_data['items']
+        for item in item_data:
+            
             # Check if item exists by code
-            existing = await Item.get_by_code(item_data['code'])
+            existing = await get_item_by_code(item['code'])
             if not existing:
-                item = Item(
-                    name=item_data['name'],
-                    code=item_data['code'],
-                    components=item_data['components'],
-                    description=item_data['description']
+                new_item = Item(
+                    name=item['name'],
+                    code=item['code'],
+                    components=item['components'],
+                    description=item['description']
                 )
-                await insert_item(item)
+                await insert_item(new_item)
 
 if __name__ == "__main__":
     asyncio.run(preload_objects())

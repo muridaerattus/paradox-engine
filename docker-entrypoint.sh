@@ -12,7 +12,7 @@ fi
 
 touch paradox.db
 
-uv run preload_objects.py
+uv run scripts/preload_objects.py
 
 # Start the bot
 uv run main.py

@@ -62,7 +62,7 @@ docker run --env-file path/to/your/env-file \
 -v /path/to/quiz/class_quiz.json:/app/class_quiz.json \
 -v /path/to/quiz/aspect_quiz.json:/app/aspect_quiz.json \
 -v ./paradox.db:/app/paradox.db \
-paradox-engine
+muridaerattus/paradox-engine
 ```
 
 It's about the same amount of work to update, but at least I can start and stop it in the background.

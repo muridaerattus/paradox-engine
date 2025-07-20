@@ -2,6 +2,12 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
+# Remove paradox.db if it exists as a directory
+RUN [ ! -d /app/paradox.db ] || rm -rf /app/paradox.db
+
+# Set PYTHONPATH so modules are found
+ENV PYTHONPATH=/app
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
