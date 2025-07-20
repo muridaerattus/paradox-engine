@@ -1,19 +1,26 @@
 #!/bin/bash
 set -e
 
-# Set up alembic.ini from example if not present
-if [ ! -f "/app/alembic.ini" ]; then
-    cp /app/alembic.ini.example /app/alembic.ini
-    if [ -n "$DATABASE_URL" ]; then
-        sed -i "s|^sqlalchemy.url.*$|sqlalchemy.url = $DATABASE_URL|" /app/alembic.ini
-    fi
+# Use DATABASE_URL from environment, default to SQLite if not set
+export DATABASE_URL="${DATABASE_URL:-sqlite+aiosqlite:///./paradox.db}"
+
+# If using SQLite, ensure paradox.db is not overwritten
+if [[ "$DATABASE_URL" == sqlite+aiosqlite* ]]; then
+  if [ ! -f ./paradox.db ]; then
+    touch ./paradox.db
+  fi
 fi
 
-# Activate virtual environment
-source /app/.venv/bin/activate
+# Run migrations if alembic is present
+if [ -f alembic.ini ] || [ -f alembic.ini.example ]; then
+  if [ -f alembic.ini ]; then
+    uv run alembic upgrade head
+  else
+    cp alembic.ini.example alembic.ini
+    sed -i "s|^sqlalchemy.url =.*|sqlalchemy.url = $DATABASE_URL|" alembic.ini
+    uv run alembic upgrade head
+  fi
+fi
 
-# Run Alembic migrations using uv
-uv run alembic upgrade head
-
-# Start the bot using uv
-exec uv run main.py
+# Start the bot
+uv run main.py

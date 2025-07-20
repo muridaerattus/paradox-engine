@@ -17,6 +17,9 @@ RUN pip install --no-cache-dir --upgrade pip \
     && uv sync
     && uv lock
 
+# Make /app/paradox.db persistable via Docker volumes
+VOLUME ["/app/paradox.db"]
+
 # Entrypoint script
 COPY docker-entrypoint.sh /app/docker-entrypoint.sh
 RUN chmod +x /app/docker-entrypoint.sh
