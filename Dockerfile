@@ -13,8 +13,8 @@ COPY . /app
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir uv
-    && uv sync
+    && pip install --no-cache-dir uv \
+    && uv sync \
     && uv lock
 
 # Make /app/paradox.db persistable via Docker volumes
