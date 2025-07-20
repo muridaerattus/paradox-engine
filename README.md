@@ -73,13 +73,15 @@ It's about the same amount of work to update, but at least I can start and stop 
 
 `uv lock`, then `uv sync`.
 
+`cp alembic.ini.example cp alembic.ini`, then replace `sqlalchemy.url` in the file with the name of your database connection. Try `sqlite+aiosqlite:///./paradox.db`.
+
 `uv run alembic upgrade head` to initialize the local database.
 
 `uv run -m scripts.preload_objects` to preload some basic objects and easter eggs.
 
 `source .venv/bin/activate` to activate the virtual environment.
 
-`nohup python3 main.py > log.txt & disown -h` to run the bot in the background.
+`nohup uv run main.py > log.txt & disown -h` to run the bot in the background.
 
 ## Credits
 
