@@ -81,7 +81,7 @@ It's about the same amount of work to update, but at least I can start and stop 
 
 `source .venv/bin/activate` to activate the virtual environment.
 
-`nohup uv run main.py > log.txt & disown -h` to run the bot in the background.
+`nohup python main.py > log.txt & disown -h` to run the bot in the background.
 
 ## Credits
 
