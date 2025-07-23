@@ -126,7 +126,7 @@ async def fraymotif(interaction: discord.Interaction, players: str, memory: str,
         titles = [Title(title_class=cls, title_aspect=asp) for cls, asp in zip(classes, aspects)]
         
         fraymotif = await create_fraymotif(titles, memory, additional_info)
-        await interaction.followup.send(f"""```{fraymotif.visual_description}\n\n{fraymotif.name.upper}\n\n{fraymotif.mechanical_description}```""")
+        await interaction.followup.send(f"""```{fraymotif.visual_description}\n\n{fraymotif.name.upper()}\n\n{fraymotif.mechanical_description}```""")
     except Exception as e:
         logger.error(e)
         await interaction.followup.send('```[ERROR] Skaian link temporarily disconnected. Please try again later.```')
