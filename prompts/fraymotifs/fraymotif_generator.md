@@ -19,7 +19,9 @@ Unless otherwise specified, refer to any players with gender-neutral pronouns su
 </FORMAT_INSTRUCTIONS>
 
 <EXAMPLE_NAMES>
-Time + Space: Adagio Redshift, Stellar Requiem
+Time + Space: Stellar Requiem
+Breath + Light: Mixolydian Maelstrom
+Breath + Time: Ivories in the Fire
 </EXAMPLE_NAMES>
 
 <EXAMPLE>
