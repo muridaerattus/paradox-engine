@@ -1,8 +1,7 @@
-from fraymotifs.models import FraymotifInput, Title, Fraymotif
+from fraymotifs.models import Title, Fraymotif
 from fraymotifs.utils import format_titles
 from settings import PROMPTS_DIRECTORY
 from langchain_anthropic import ChatAnthropic
-from langchain_together import ChatTogether
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 import aiofiles
