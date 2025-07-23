@@ -4,6 +4,9 @@ import json
 from paradox_engine import calculate_title
 from alchemy.service import alchemize_items
 from alchemy.models import Operation
+from fraymotifs.models import Title
+from fraymotifs.service import create_fraymotif
+from fraymotifs.utils import split_titles
 from database.alchemy_database import get_item_by_code
 from settings import CLASS_QUIZ_FILENAME, ASPECT_QUIZ_FILENAME, GUILD_ID, DISCORD_BOT_TOKEN
 import logging
@@ -16,7 +19,8 @@ MY_GUILD = discord.Object(id=GUILD_ID)
 CREDITS_TEXT = """```--- CREDITS ---
 Discord bot made by @murida.
 Classpect knowledge given by her good friends @reachartwork and Tamago, used with permission.
-Example answers provided by her good friend NeoUndying, used with permission.
+Example classpecting answers provided by her good friend NeoUndying, used with permission.
+Example alchemy and fraymotifs written by @murida.
 This is a Homestuck fan project. We are not affiliated with What Pumpkin.
 Thank you for being part of our shared fandom.
 
@@ -92,7 +96,7 @@ async def alchemy(interaction: discord.Interaction, item_one: str, item_two: str
 @client.tree.command()
 @app_commands.describe(code="item's alchemy code")
 async def captchalogue(interaction: discord.Interaction, code: str):
-    """Get an exicting item by its alchemy code."""
+    """Get an existing item by its alchemy code."""
     await interaction.response.defer(thinking=True)
     try:
         item = await get_item_by_code(code)
@@ -100,6 +104,29 @@ async def captchalogue(interaction: discord.Interaction, code: str):
             await interaction.followup.send('```[WARNING] Item not found. Please check the code and try again.```')
             return
         await interaction.followup.send(f"""```ITEM: {item.name}\nCODE: {item.code}\nDESCRIPTION: {item.description}```""")
+    except Exception as e:
+        logger.error(e)
+        await interaction.followup.send('```[ERROR] Skaian link temporarily disconnected. Please try again later.```')
+        return
+    
+@client.tree.command()
+@app_commands.describe(
+    players="list of titles in the form 'Class of Aspect, Class of Aspect'",
+    memory="memory the fraymotif crystallizes",
+    additional_info="additional information about the fraymotif")
+async def fraymotif(interaction: discord.Interaction, players: str, memory: str, additional_info: str):
+    """Crystallize a memory into a fraymotif suited to a player or group of players."""
+    await interaction.response.defer(thinking=True)
+    try:
+        classes, aspects = split_titles(players)
+        if not classes or not aspects:
+            await interaction.followup.send('```[ERROR] Valid titles not detected. Please use the form "Class of Aspect, Class of Aspect".```')
+            return
+        
+        titles = [Title(title_class=cls, title_aspect=asp) for cls, asp in zip(classes, aspects)]
+        
+        fraymotif = await create_fraymotif(titles, memory, additional_info)
+        await interaction.followup.send(f"""```{fraymotif.visual_description}\n\n{fraymotif.name.upper()}\n\n{fraymotif.mechanical_description}```""")
     except Exception as e:
         logger.error(e)
         await interaction.followup.send('```[ERROR] Skaian link temporarily disconnected. Please try again later.```')

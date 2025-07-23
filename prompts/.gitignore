@@ -1,14 +1,3 @@
-*
-
-!/alchemy
-!/aspects
-!/classes
-
-!item_description_generator.md
-!item_name_generator.md
-!item_generator.md
-!quiz_answerer.md
-
-!paradox_engine.md.example
-
-!.gitignore
+aspect_example.md
+class_example.md
+paradox_engine.md
