@@ -17,7 +17,7 @@ async def create_fraymotif(titles: list[Title], memory: str, additional_info: st
     if len(titles) < 1:
         raise ValueError("At least one title is required to create a fraymotif.")
     
-    async with aiofiles.open(f"{PROMPTS_DIRECTORY}/fraymotif/fraymotif_generator") as f:
+    async with aiofiles.open(f"{PROMPTS_DIRECTORY}/fraymotif/fraymotif_generator.md") as f:
         fraymotif_prompt = await f.read()
     prompt = ChatPromptTemplate([
         ('system', fraymotif_prompt),
