@@ -18,6 +18,10 @@ Unless otherwise specified, refer to any players with gender-neutral pronouns su
 {format_instructions}
 </FORMAT_INSTRUCTIONS>
 
+<EXAMPLE_NAMES>
+Time + Space: Adagio Redshift, Stellar Requiem
+</EXAMPLE_NAMES>
+
 <EXAMPLE>
 
 <INPUT>
