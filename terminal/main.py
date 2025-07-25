@@ -55,7 +55,7 @@ async def classpect(interaction: discord.Interaction, personality: str):
     async with httpx.AsyncClient() as client_http:
         try:
             resp = await client_http.post(
-                f"{API_URL}/classpect", json={"personality": personality}
+                f"{API_URL}/classpect", json={"personality": personality}, timeout=30.0
             )
             resp.raise_for_status()
             result = resp.json()["result"]
@@ -76,7 +76,10 @@ async def classpect(interaction: discord.Interaction, personality: str):
     operation="the operation to perform",
 )
 async def alchemy(
-    interaction: discord.Interaction, item_one: str, item_two: str, operation: Literal['and', 'or']
+    interaction: discord.Interaction,
+    item_one: str,
+    item_two: str,
+    operation: Literal["and", "or"],
 ):
     """Combine two items using their alchemy codes."""
     await interaction.response.defer(thinking=True)
@@ -89,6 +92,7 @@ async def alchemy(
                     "item_two": item_two,
                     "operation": operation,
                 },
+                timeout=30.0,
             )
             resp.raise_for_status()
             combined_item = resp.json()
@@ -102,7 +106,9 @@ async def alchemy(
                     "```[WARNING] Item not found. Please check the code and try again.```"
                 )
             else:
-                logger.error(f"HTTP error during alchemy: {e} (status code: {e.response.status_code})")
+                logger.error(
+                    f"HTTP error during alchemy: {e} (status code: {e.response.status_code})"
+                )
                 await interaction.followup.send(
                     "```[ERROR] Skaian link temporarily disconnected. Please try again later.```"
                 )
@@ -165,12 +171,20 @@ async def fraymotif(
                     "memory": memory,
                     "additional_info": additional_info,
                 },
+                timeout=30.0,
             )
             resp.raise_for_status()
             fraymotif = resp.json()
             output = f"{fraymotif['visual_description']}\n\n{fraymotif['name'].upper()}\n\n{fraymotif['mechanical_description']}"
             for chunk in split_message(output):
                 await interaction.followup.send(f"```{chunk}```")
+        except httpx.ReadTimeout:
+            logger.error(
+                f"ReadTimeout during fraymotif | players='{players}', memory='{memory}', additional_info='{additional_info}'"
+            )
+            await interaction.followup.send(
+                "```[ERROR] Skaian link timed out. Please try again later.```"
+            )
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 400:
                 logger.warning(
@@ -184,15 +198,15 @@ async def fraymotif(
                     f"HTTP error during fraymotif: {e} (status code: {e.response.status_code}) | players='{players}', memory='{memory}', additional_info='{additional_info}'"
                 )
                 await interaction.followup.send(
-                    "```[ERROR] Skaian link temporarily disconnected. Please try again later.```"
+                    "```[ERROR] Skaian link rendered uninterpretable. Please try again later.```"
                 )
         except Exception as e:
             logger.error(
-            f"Unexpected error during fraymotif: {e} | players='{players}', memory='{memory}', additional_info='{additional_info}'",
-            exc_info=True
+                f"Unexpected error during fraymotif: {e} | players='{players}', memory='{memory}', additional_info='{additional_info}'",
+                exc_info=True,
             )
             await interaction.followup.send(
-            "```[ERROR] Skaian link temporarily disconnected. Please try again later.```"
+                "```[ERROR] Skaian link temporarily disconnected. Please try again later.```"
             )
 
 
