@@ -173,18 +173,26 @@ async def fraymotif(
                 await interaction.followup.send(f"```{chunk}```")
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 400:
+                logger.warning(
+                    f"Fraymotif command received invalid titles: players='{players}', memory='{memory}', additional_info='{additional_info}'. Error: {e}"
+                )
                 await interaction.followup.send(
                     '```[ERROR] Valid titles not detected. Please use the form "Class of Aspect, Class of Aspect".```'
                 )
             else:
-                logger.error(e)
+                logger.error(
+                    f"HTTP error during fraymotif: {e} (status code: {e.response.status_code}) | players='{players}', memory='{memory}', additional_info='{additional_info}'"
+                )
                 await interaction.followup.send(
                     "```[ERROR] Skaian link temporarily disconnected. Please try again later.```"
                 )
         except Exception as e:
-            logger.error(e)
+            logger.error(
+            f"Unexpected error during fraymotif: {e} | players='{players}', memory='{memory}', additional_info='{additional_info}'",
+            exc_info=True
+            )
             await interaction.followup.send(
-                "```[ERROR] Skaian link temporarily disconnected. Please try again later.```"
+            "```[ERROR] Skaian link temporarily disconnected. Please try again later.```"
             )
 
 
