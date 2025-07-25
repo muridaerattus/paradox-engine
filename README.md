@@ -83,6 +83,36 @@ It's about the same amount of work to update, but at least I can start and stop 
 
 `nohup python main.py > log.txt & disown -h` to run the bot in the background.
 
+## Running the Engine (FastAPI backend)
+
+1. Install dependencies (from the `engine` directory):
+   ```bash
+   cd engine
+   uv sync  # install dependencies from pyproject.toml or requirements.txt
+   ```
+2. Start the FastAPI server in the background:
+   ```bash
+   nohup uvicorn main:app --reload > engine.log 2>&1 &
+   disown
+   ```
+   By default, the API will be available at http://localhost:8000
+
+## Running the Terminal (Discord bot)
+
+1. Install dependencies (from the `terminal` directory):
+   ```bash
+   cd terminal
+   uv sync  # install dependencies from pyproject.toml or requirements.txt
+   ```
+2. Set up your Discord bot token and configuration in `settings.py`.
+3. Start the Discord bot in the background:
+   ```bash
+   nohup uv run main.py > terminal.log 2>&1 &
+   disown
+   ```
+
+**Note:** The Discord bot requires the FastAPI engine to be running and accessible at the configured API URL (default: http://localhost:8000).
+
 ## Credits
 
 Classpect knowledge given by my good friends @reachartwork and Tamago, used with permission.

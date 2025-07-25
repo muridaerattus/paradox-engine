@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+import logging
 from paradox_engine import calculate_title
 from alchemy.service import alchemize_items
 from alchemy.models import Operation
@@ -29,30 +30,33 @@ class_quiz_json = json.load(open(CLASS_QUIZ_FILENAME, 'r'))
 aspect_quiz_json = json.load(open(ASPECT_QUIZ_FILENAME, 'r'))
 
 @app.post("/classpect")
-def classpect(req: ClasspectRequest):
+async def classpect(req: ClasspectRequest):
     try:
-        result = calculate_title(req.personality, class_quiz_json, aspect_quiz_json)
+        result = await calculate_title(req.personality, class_quiz_json, aspect_quiz_json)
         return {"result": result}
     except Exception as e:
+        logging.error(f"Error in /classpect: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/alchemy/alchemize")
-def alchemize(req: AlchemizeRequest):
+async def alchemize(req: AlchemizeRequest):
     try:
-        combined_item = alchemize_items(req.item_one, req.item_two, req.operation)
+        combined_item = await alchemize_items(req.item_one, req.item_two, req.operation)
         return {
             "name": combined_item.name,
             "code": combined_item.code,
             "description": combined_item.description
         }
     except Exception as e:
+        logging.error(f"Error in /alchemy/alchemize: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/alchemy/captchalogue")
-def captchalogue(code: str):
+async def captchalogue(code: str):
     try:
-        item = get_item_by_code(code)
+        item = await get_item_by_code(code)
         if not item:
+            logging.warning(f"Item not found for code: {code}")
             raise HTTPException(status_code=404, detail="Item not found")
         return {
             "name": item.name,
@@ -60,20 +64,23 @@ def captchalogue(code: str):
             "description": item.description
         }
     except Exception as e:
+        logging.error(f"Error in /alchemy/captchalogue: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/fraymotif")
-def fraymotif(req: FraymotifRequest):
+async def fraymotif(req: FraymotifRequest):
     try:
         classes, aspects = split_titles(req.players)
         if not classes or not aspects:
+            logging.warning(f"Invalid titles in /fraymotif: {req.players}")
             raise HTTPException(status_code=400, detail="Valid titles not detected. Use the form 'Class of Aspect, Class of Aspect'.")
         titles = [Title(title_class=cls, title_aspect=asp) for cls, asp in zip(classes, aspects)]
-        fraymotif = create_fraymotif(titles, req.memory, req.additional_info)
+        fraymotif = await create_fraymotif(titles, req.memory, req.additional_info)
         return {
             "visual_description": fraymotif.visual_description,
             "name": fraymotif.name,
             "mechanical_description": fraymotif.mechanical_description
         }
     except Exception as e:
+        logging.error(f"Error in /fraymotif: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
