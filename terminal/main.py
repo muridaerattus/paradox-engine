@@ -176,7 +176,7 @@ async def fraymotif(
             resp.raise_for_status()
             fraymotif = resp.json()
             output = f"{fraymotif['visual_description']}\n\n{fraymotif['name'].upper()}\n\n{fraymotif['mechanical_description']}"
-            for chunk in split_message(output):
+            for chunk in split_message(output, max_length=1994):
                 await interaction.followup.send(f"```{chunk}```")
         except httpx.ReadTimeout:
             logger.error(
