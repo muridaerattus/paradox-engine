@@ -8,7 +8,7 @@ from sqlmodel import select
 
 load_dotenv(find_dotenv())
 
-DATABASE_URL = os.environ.get('DATABASE_URL')
+DATABASE_URL = os.environ.get("DATABASE_URL")
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable is not set.")
 engine = create_async_engine(DATABASE_URL, echo=True)
@@ -18,17 +18,13 @@ async_session = AsyncSession(engine, expire_on_commit=False)
 async def get_item_by_name_or_code(name_or_code: str) -> Item | None:
     """
     Retrieve an item by its name or alchemy code.
-    
+
     :param name_or_code: The name or code of the item to retrieve
     :return: An Item instance if found, otherwise None
     """
     async with async_session as session:
         async with session.begin():
-            result = await session.exec(
-                select(Item).where(
-                    (Item.code == name_or_code)
-                )
-            )
+            result = await session.exec(select(Item).where((Item.code == name_or_code)))
             item = result.first()
             if item:
                 return item
@@ -36,35 +32,30 @@ async def get_item_by_name_or_code(name_or_code: str) -> Item | None:
                 # If no item found by code, try by name
                 name_or_code = format_name(name_or_code)
                 result = await session.exec(
-                    select(Item).where(
-                        (Item.name == name_or_code)
-                    )
+                    select(Item).where((Item.name == name_or_code))
                 )
             item = result.first()
             return item
-        
+
+
 async def get_item_by_code(code: str) -> Item | None:
     """
     Retrieve an item by its alchemy code or formatted name.
-    
+
     :param code: The code or name of the item to retrieve
     :return: An Item instance if found, otherwise None
     """
     async with async_session as session:
         async with session.begin():
-            result = await session.exec(
-                select(Item).where(
-                    (Item.code == code)
-                )
-            )
+            result = await session.exec(select(Item).where((Item.code == code)))
         item = result.first()
         return item
-        
-        
+
+
 async def insert_item(item: Item) -> Item:
     """
     Insert a new item into the database.
-    
+
     :param item: An Item instance to insert
     :return: The inserted Item instance
     """
