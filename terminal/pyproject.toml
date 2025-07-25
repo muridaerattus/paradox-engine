@@ -1,0 +1,11 @@
+[project]
+name = "paradox-terminal"
+version = "0.1.0"
+description = "Discord bot for Paradox Engine"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "discord>=2.3.2",
+    "httpx>=0.28.1",
+    "ruff>=0.12.5",
+]
