@@ -54,7 +54,7 @@ I personally like Claude's interpretation of the Paradox Engine the most, just b
 
 ## Instructions
 
-### Docker
+### Docker (deprecated for now)
 
 ```
 docker run --env-file path/to/your/env-file \
@@ -69,47 +69,42 @@ It's about the same amount of work to update, but at least I can start and stop 
 
 ### Manual
 
-`pip install uv`, or however you want to install uv.
+I manage dependencies with `uv`, because it's fast. Before all this, use `pip install uv`, or however you want to install uv.
 
-`uv lock`, then `uv sync`.
-
-`cp alembic.ini.example cp alembic.ini`, then replace `sqlalchemy.url` in the file with the name of your database connection. Try `sqlite+aiosqlite:///./paradox.db`.
-
-`uv run alembic upgrade head` to initialize the local database.
-
-`uv run -m scripts.preload_objects` to preload some basic objects and easter eggs.
-
-`source .venv/bin/activate` to activate the virtual environment.
-
-`nohup python main.py > log.txt & disown -h` to run the bot in the background.
-
-## Running the Engine (FastAPI backend)
+#### Running the Engine (FastAPI backend)
 
 1. Install dependencies (from the `engine` directory):
-   ```bash
-   cd engine
-   uv sync  # install dependencies from pyproject.toml or requirements.txt
-   ```
-2. Start the FastAPI server in the background:
-   ```bash
-   nohup uvicorn main:app --reload > engine.log 2>&1 &
-   disown
-   ```
+    ```bash
+    cd engine
+    uv venv
+    source .venv/bin/activate
+    uv sync
+    ```
+2. Update the database. Replace `sqlalchemy.url` in `alembic.ini.example` with the name of your database connection. Try `sqlite+aiosqlite:///./paradox.db`. Then run:
+    ```bash
+    cp alembic.ini.example cp alembic.ini
+    uv run alembic upgrade head
+    uv run -m scripts.preload_objects
+    ```
+3. Set up your `.env` by copying over the `.env.example`.
+4. Start the FastAPI server in the background:
+    ```bash
+    nohup uvicorn main:app --reload > log.txt & disown -h
+    ```
    By default, the API will be available at http://localhost:8000
 
-## Running the Terminal (Discord bot)
+#### Running the Terminal (Discord bot)
 
 1. Install dependencies (from the `terminal` directory):
-   ```bash
-   cd terminal
-   uv sync  # install dependencies from pyproject.toml or requirements.txt
-   ```
-2. Set up your Discord bot token and configuration in `settings.py`.
+    ```bash
+    cd terminal
+    uv sync
+    ```
+2. Set up your `.env` by copying over the `.env.example`.
 3. Start the Discord bot in the background:
-   ```bash
-   nohup uv run main.py > terminal.log 2>&1 &
-   disown
-   ```
+    ```bash
+    nohup uv run main.py > log.txt & disown -h
+    ```
 
 **Note:** The Discord bot requires the FastAPI engine to be running and accessible at the configured API URL (default: http://localhost:8000).
 
