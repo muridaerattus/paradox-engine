@@ -2,6 +2,7 @@ import discord
 from discord import app_commands
 import httpx
 import logging
+from typing import Literal
 from settings import GUILD_ID, DISCORD_BOT_TOKEN, API_URL
 from utils import split_message
 
@@ -75,7 +76,7 @@ async def classpect(interaction: discord.Interaction, personality: str):
     operation="the operation to perform",
 )
 async def alchemy(
-    interaction: discord.Interaction, item_one: str, item_two: str, operation: str
+    interaction: discord.Interaction, item_one: str, item_two: str, operation: Literal['and', 'or']
 ):
     """Combine two items using their alchemy codes."""
     await interaction.response.defer(thinking=True)
@@ -101,12 +102,12 @@ async def alchemy(
                     "```[WARNING] Item not found. Please check the code and try again.```"
                 )
             else:
-                logger.error(e)
+                logger.error(f"HTTP error during alchemy: {e} (status code: {e.response.status_code})")
                 await interaction.followup.send(
                     "```[ERROR] Skaian link temporarily disconnected. Please try again later.```"
                 )
         except Exception as e:
-            logger.error(e)
+            logger.error(f"Unexpected error during alchemy: {e}", exc_info=True)
             await interaction.followup.send(
                 "```[ERROR] Skaian link temporarily disconnected. Please try again later.```"
             )
