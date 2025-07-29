@@ -127,5 +127,5 @@ async def calculate_title(
     return ParadoxEngineOutput(
         class_result=class_result,
         aspect_result=aspect_result,
-        llm_response=llm_response,
+        llm_response=llm_response.content,
     )
