@@ -1,6 +1,8 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import logging
+import re
 from paradox_engine import calculate_title
 from alchemy.service import alchemize_items
 from alchemy.models import Operation
@@ -12,6 +14,16 @@ from settings import CLASS_QUIZ_FILENAME, ASPECT_QUIZ_FILENAME
 import json
 
 app = FastAPI()
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_origin_regex=r"http://localhost:\d+",  # come on, vite
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
+)
 
 
 class ClasspectRequest(BaseModel):
@@ -32,6 +44,10 @@ class FraymotifRequest(BaseModel):
 
 class_quiz_json = json.load(open(CLASS_QUIZ_FILENAME, "r"))
 aspect_quiz_json = json.load(open(ASPECT_QUIZ_FILENAME, "r"))
+
+@app.get("/")
+async def root():
+    return {"message": "PARADOX ENGINE: Status operational."}
 
 
 @app.post("/classpect")
@@ -68,6 +84,8 @@ async def captchalogue(code: str):
             logging.warning(f"Item not found for code: {code}")
             raise HTTPException(status_code=404, detail="Item not found")
         return {"name": item.name, "code": item.code, "description": item.description}
+    except HTTPException as http_exc:
+        raise http_exc
     except Exception as e:
         logging.error(f"Error in /alchemy/captchalogue: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
@@ -93,6 +111,8 @@ async def fraymotif(req: FraymotifRequest):
             "name": fraymotif.name,
             "mechanical_description": fraymotif.mechanical_description,
         }
+    except HTTPException as http_exc:
+        raise http_exc
     except Exception as e:
         logging.error(f"Error in /fraymotif: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
