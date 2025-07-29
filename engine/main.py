@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import logging
-from classpect.paradox_engine import calculate_title
+from engine.classpect.service import calculate_title
 from alchemy.service import alchemize_items
 from alchemy.models import Operation
 from fraymotifs.models import Title
@@ -43,6 +43,7 @@ class FraymotifRequest(BaseModel):
 
 class_quiz_json = json.load(open(CLASS_QUIZ_FILENAME, "r"))
 aspect_quiz_json = json.load(open(ASPECT_QUIZ_FILENAME, "r"))
+
 
 @app.get("/")
 async def root():

@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 # Models have to be imported for Alembic to recognize them.
-from alchemy.models import Item # noqa: F401
+from alchemy.models import Item  # noqa: F401
 from sqlmodel import SQLModel
 
 # this is the Alembic Config object, which provides

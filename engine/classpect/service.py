@@ -1,12 +1,13 @@
 import aiofiles
 import random
+import logging
 from enum import Enum
 from pydantic import create_model
 from pydantic.fields import FieldInfo
 from langchain_anthropic import ChatAnthropic
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
-import logging
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
