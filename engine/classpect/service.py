@@ -1,55 +1,14 @@
 import aiofiles
 import random
 import logging
-from enum import Enum
-from pydantic import create_model
-from pydantic.fields import FieldInfo
 from langchain_anthropic import ChatAnthropic
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
+from classpect.utils import format_answer_string, quiz_to_model, generate_question_list
 
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-async def format_answer_string(s: str):
-    return s.lower().replace(".", "").replace('"', "")
-
-
-async def quiz_to_model(quiz_json):
-    enums = [
-        Enum(
-            question["question"],
-            ((answer["answer"], answer["answer"]) for answer in question["answers"]),
-            type=str,
-        )
-        for question in quiz_json
-    ]
-    chain_of_thought_attrs = {
-        "ThinkingSpace": (
-            str,
-            FieldInfo(
-                description="Space to think about the general themes of the questions before you answer them, given your personality."
-            ),
-        )
-    }
-    answer_attrs = {
-        f"Answer{i + 1}": (
-            question_enum,
-            FieldInfo(description=f'Answer to the question "{question_enum.__name__}"'),
-        )
-        for i, question_enum in enumerate(enums)
-    }
-    attrs = chain_of_thought_attrs | answer_attrs
-    quiz_model = create_model("QuizAnswers", **attrs)
-    return quiz_model
-
-
-async def generate_question_list(quiz_json):
-    return "\n".join(
-        [f"{i + 1}. {question['question']}" for i, question in enumerate(quiz_json)]
-    )
 
 
 async def answer_questions(quiz_json, llm, prompt, character_description, example):
