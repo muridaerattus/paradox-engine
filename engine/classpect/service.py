@@ -18,7 +18,6 @@ async def answer_questions(quiz_json, llm, prompt, character_description, exampl
             answer["answer"] = await format_answer_string(answer["answer"])
             results.update(answer["personality_types"])
 
-    result_scores = {result: 0 for result in results}
     quiz_model = await quiz_to_model(quiz_json)
     question_list = await generate_question_list(quiz_json)
 
@@ -39,6 +38,7 @@ async def answer_questions(quiz_json, llm, prompt, character_description, exampl
     answers_in_order = [x[1]._value_ for x in answer_objects if not isinstance(x, str)]
     logger.info(answers_in_order)
 
+    result_scores = {result: 0 for result in results}
     for i, question in enumerate(quiz_json):
         answer_list = question["answers"]
         answers_by_text = {a["answer"]: a["personality_types"] for a in answer_list}
