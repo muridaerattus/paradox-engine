@@ -1,9 +1,8 @@
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import logging
-import re
-from paradox_engine import calculate_title
+from classpect.paradox_engine import calculate_title
 from alchemy.service import alchemize_items
 from alchemy.models import Operation
 from fraymotifs.models import Title
