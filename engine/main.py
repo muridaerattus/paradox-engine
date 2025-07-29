@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import logging
-from engine.classpect.service import calculate_title
+from classpect.service import calculate_title
 from alchemy.service import alchemize_items
 from alchemy.models import Operation
 from fraymotifs.models import Title
