@@ -56,7 +56,11 @@ async def classpect(req: ClasspectRequest):
         result = await calculate_title(
             req.personality, class_quiz_json, aspect_quiz_json
         )
-        return {"result": result}
+        return {
+            "class": result.class_result,
+            "aspect": result.aspect_result,
+            "result": result.llm_response,
+        }
     except Exception as e:
         logging.error(f"Error in /classpect: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))

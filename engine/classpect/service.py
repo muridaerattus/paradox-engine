@@ -4,6 +4,7 @@ import logging
 from langchain_anthropic import ChatAnthropic
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
+from classpect.models import ParadoxEngineOutput
 from classpect.utils import format_answer_string, quiz_to_model, generate_question_list
 
 
@@ -57,7 +58,9 @@ async def answer_questions(quiz_json, llm, prompt, character_description, exampl
     return random.choice(max_results)
 
 
-async def calculate_title(character_description, class_quiz_json, aspect_quiz_json):
+async def calculate_title(
+    character_description, class_quiz_json, aspect_quiz_json
+) -> ParadoxEngineOutput:
     # llm = ChatTogether(model="meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo") # Good for diverse results. May not follow proper formatting all the time.
     # llm = ChatTogether(model="meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo") # Better for diverse results, but a bit overkill.
     # llm = ChatAnthropic(model="claude-3-5-sonnet-20241022") # Default; says "Rogue of Doom/Rage/Time" a lot.
@@ -121,4 +124,8 @@ async def calculate_title(character_description, class_quiz_json, aspect_quiz_js
         }
     )
 
-    return llm_response.content
+    return ParadoxEngineOutput(
+        class_result=class_result,
+        aspect_result=aspect_result,
+        llm_response=llm_response,
+    )
