@@ -1,9 +1,8 @@
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import logging
-import re
-from paradox_engine import calculate_title
+from classpect.service import calculate_title
 from alchemy.service import alchemize_items
 from alchemy.models import Operation
 from fraymotifs.models import Title
@@ -45,6 +44,7 @@ class FraymotifRequest(BaseModel):
 class_quiz_json = json.load(open(CLASS_QUIZ_FILENAME, "r"))
 aspect_quiz_json = json.load(open(ASPECT_QUIZ_FILENAME, "r"))
 
+
 @app.get("/")
 async def root():
     return {"message": "PARADOX ENGINE: Status operational."}
@@ -56,7 +56,11 @@ async def classpect(req: ClasspectRequest):
         result = await calculate_title(
             req.personality, class_quiz_json, aspect_quiz_json
         )
-        return {"result": result}
+        return {
+            "class": result.class_result,
+            "aspect": result.aspect_result,
+            "result": result.llm_response,
+        }
     except Exception as e:
         logging.error(f"Error in /classpect: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
