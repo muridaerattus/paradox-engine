@@ -21,6 +21,7 @@ def format_name(name: str) -> str:
     return " ".join(word.capitalize() for word in name.split())
 
 
+# Database model for an alchemy item
 class Item(SQLModel, table=True):
     id: int = Field(..., description="", primary_key=True)
     code: AlchemyCode = Field(
@@ -31,9 +32,11 @@ class Item(SQLModel, table=True):
     )
     name: str = Field(..., description="Name of the item")
     description: str = Field(..., description="Description of the item")
+    tagline: str = Field(default="", description="Short tagline for the item")
 
 
-class ItemNameAndDescription(SQLModel):
+# Used for LLM output parsing
+class AlchemizedItem(SQLModel):
     thinking_space: str = Field(
         description="Space to think about the item's name and description"
     )

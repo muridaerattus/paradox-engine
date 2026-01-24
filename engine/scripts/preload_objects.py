@@ -1,5 +1,5 @@
 import asyncio
-from database.alchemy_database import insert_item, get_item_by_code
+from database.alchemy_database import insert_item, get_item_by_code, update_item
 from alchemy.models import Item
 import json
 
@@ -22,9 +22,16 @@ async def preload_objects():
                     name=item["name"],
                     code=item["code"],
                     components=item["components"],
+                    tagline=item["tagline"],
                     description=item["description"],
                 )
                 await insert_item(new_item)
+            else:
+                existing.name = item["name"]
+                existing.components = item["components"]
+                existing.tagline = item["tagline"]
+                existing.description = item["description"]
+                await update_item(existing)
 
 
 if __name__ == "__main__":
