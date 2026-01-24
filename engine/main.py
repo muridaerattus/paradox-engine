@@ -74,6 +74,7 @@ async def alchemize(req: AlchemizeRequest):
             "name": combined_item.name,
             "code": combined_item.code,
             "description": combined_item.description,
+            "tagline": combined_item.tagline,
         }
     except Exception as e:
         logging.error(f"Error in /alchemy/alchemize: {e}", exc_info=True)
