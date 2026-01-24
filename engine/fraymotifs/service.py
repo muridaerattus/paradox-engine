@@ -59,7 +59,7 @@ async def create_fraymotif(
             ),
         ]
     )
-    llm = ChatAnthropic(model="claude-3-7-sonnet-latest")
+    llm = ChatAnthropic(model="claude-4-5-sonnet-latest")
     parser = PydanticOutputParser(pydantic_object=Fraymotif)
     format_instructions = parser.get_format_instructions()
     llm_chain = prompt | llm | parser
