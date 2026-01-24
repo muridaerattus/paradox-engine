@@ -61,7 +61,7 @@ async def answer_questions(quiz_json, llm, prompt, character_description, exampl
 async def calculate_title(
     character_description, class_quiz_json, aspect_quiz_json
 ) -> ParadoxEngineOutput:
-    llm = ChatAnthropic(model="claude-4-5-sonnet-latest")  # Untested.
+    llm = ChatAnthropic(model="claude-sonnet-4-5-20250929")  # Untested.
     async with aiofiles.open("prompts/quiz_answerer.md") as f:
         quiz_answerer_prompt_text = await f.read()
     quiz_answerer_prompt = ChatPromptTemplate(
@@ -103,7 +103,7 @@ async def calculate_title(
     async with aiofiles.open("prompts/paradox_engine.md") as f:
         paradox_engine_prompt = await f.read()
 
-    llm = ChatAnthropic(model="claude-4-5-sonnet-latest")
+    llm = ChatAnthropic(model="claude-sonnet-4-5-20250929")
     prompt = ChatPromptTemplate(
         [
             ("system", paradox_engine_prompt),
