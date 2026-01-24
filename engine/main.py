@@ -96,7 +96,12 @@ async def captchalogue(code: str):
         if not item:
             logging.warning(f"Item not found for code: {code}")
             raise HTTPException(status_code=404, detail="Item not found")
-        return {"name": item.name, "code": item.code, "description": item.description}
+        return {
+            "name": item.name,
+            "code": item.code, 
+            "description": item.description,
+            "tagline": item.tagline,
+        }
     except HTTPException as http_exc:
         raise http_exc
     except Exception as e:
