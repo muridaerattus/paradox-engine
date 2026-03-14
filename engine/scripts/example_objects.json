@@ -60,7 +60,7 @@
             "name": "Captchalogue Card",
             "code": "11111111",
             "components": "Captchalogue Card",
-            "description": "A large lollipop with swirls of red and green.",
+            "description": "A rectangular card with a blank space on the front for item storage and a space for a code on the back.",
             "tagline": "A card that can hold any item you captchalogue. Each item has a unique code that identifies it on the back."
         }
     ]
