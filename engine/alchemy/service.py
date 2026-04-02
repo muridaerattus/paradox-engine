@@ -117,7 +117,7 @@ async def generate_item(item_1: Item, item_2: Item, operation: Operation) -> Ite
             ),
         ]
     )
-    llm = ChatTogether(model="meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8")
+    llm = ChatTogether(model="meta-llama/Llama-3.3-70B-Instruct-Turbo")
     parser = PydanticOutputParser(pydantic_object=AlchemizedItem)
     format_instructions = parser.get_format_instructions()
     llm_chain = prompt | llm | parser
@@ -159,7 +159,7 @@ async def generate_description(name: str) -> str:
         item_description_prompt = await f.read()
 
     prompt = ChatPromptTemplate([("system", item_description_prompt), ("user", name)])
-    llm = ChatTogether(model="meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8")
+    llm = ChatTogether(model="meta-llama/Llama-3.3-70B-Instruct-Turbo")
     llm_chain = prompt | llm | StrOutputParser()
 
     return await llm_chain.ainvoke({})
@@ -179,7 +179,7 @@ async def generate_tagline(name: str, description: str) -> str:
         item_tagline_prompt = await f.read()
 
     prompt = ChatPromptTemplate([("system", item_tagline_prompt), ("user", f"{name}\n{description}")])
-    llm = ChatTogether(model="meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8")
+    llm = ChatTogether(model="meta-llama/Llama-3.3-70B-Instruct-Turbo")
     llm_chain = prompt | llm | StrOutputParser()
 
     return await llm_chain.ainvoke({})

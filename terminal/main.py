@@ -10,8 +10,8 @@ MY_GUILD = discord.Object(id=GUILD_ID)
 
 CREDITS_TEXT = """```--- CREDITS ---
 Discord bot made by @murida.
-Classpect knowledge given by her good friends @reachartwork and Tamago, used with permission.
-Example classpecting answers provided by her good friend NeoUndying, used with permission.
+Classpect knowledge given by good friends, @reachartwork and Tamago, used with permission.
+Example classpecting answers provided by a good friend, NeoUndying, used with permission.
 Example alchemy and fraymotifs written by @murida.
 This is a Homestuck fan project. We are not affiliated with What Pumpkin.
 Thank you for being part of our shared fandom.
