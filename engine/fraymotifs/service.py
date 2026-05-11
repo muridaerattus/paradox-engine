@@ -36,7 +36,7 @@ async def create_fraymotif(
         raise ValueError("At least one title is required to create a fraymotif.")
 
     aspect_context = await generate_aspect_context(titles)
-    llm = ChatAnthropic(model="claude-sonnet-4-6")
+    llm = ChatAnthropic(model="claude-sonnet-4-5-20250929")
     parser = PydanticOutputParser(pydantic_object=Fraymotif)
     format_instructions = parser.get_format_instructions()
     llm_chain = FRAYMOTIF_CHAT_PROMPT | llm | parser

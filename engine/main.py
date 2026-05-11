@@ -57,8 +57,8 @@ class FraymotifRequest(BaseModel):
     additional_info: str
 
 
-class_quiz_json = json.load(open(CLASS_QUIZ_FILENAME, "r"))
-aspect_quiz_json = json.load(open(ASPECT_QUIZ_FILENAME, "r"))
+class_quiz_json: dict = json.load(open(CLASS_QUIZ_FILENAME, "r"))
+aspect_quiz_json: dict = json.load(open(ASPECT_QUIZ_FILENAME, "r"))
 
 
 @app.get("/")

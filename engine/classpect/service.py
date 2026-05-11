@@ -2,6 +2,7 @@ import asyncio
 import logging
 import random
 
+from pydantic import ValidationError
 from langchain_anthropic import ChatAnthropic
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
@@ -22,7 +23,13 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-async def answer_questions(quiz_json, llm, prompt, character_description, example):
+async def answer_questions(
+    quiz_json: dict,
+    llm,
+    prompt: ChatPromptTemplate,
+    character_description: str,
+    example: str,
+) -> str:
     results = set()
     for question in quiz_json:
         for answer in question["answers"]:
@@ -32,10 +39,10 @@ async def answer_questions(quiz_json, llm, prompt, character_description, exampl
     quiz_model = await quiz_to_model(quiz_json)
     question_list = await generate_question_list(quiz_json)
 
-    structured_llm = llm.with_structured_output(quiz_model)
+    structured_llm = llm.with_structured_output(quiz_model, include_raw=True)
     parser = PydanticOutputParser(pydantic_object=quiz_model)
     prompted_llm = prompt | structured_llm
-    llm_response = await prompted_llm.ainvoke(
+    raw_result = await prompted_llm.ainvoke(
         {
             "character_description": character_description,
             "format_instructions": parser.get_format_instructions(),
@@ -43,10 +50,35 @@ async def answer_questions(quiz_json, llm, prompt, character_description, exampl
             "example": example,
         }
     )
+
+    parsing_error = (
+        raw_result.get("parsing_error") if isinstance(raw_result, dict) else None
+    )
+    llm_response = (
+        raw_result.get("parsed") if isinstance(raw_result, dict) else raw_result
+    )
+    if parsing_error is not None or llm_response is None:
+        raw_message = (
+            raw_result.get("raw") if isinstance(raw_result, dict) else raw_result
+        )
+        logger.error(
+            "Quiz answerer failed to produce a valid structured response. "
+            "parsing_error=%r raw=%r",
+            parsing_error,
+            raw_message,
+        )
+        if isinstance(parsing_error, BaseException):
+            raise parsing_error
+        raise ValidationError.from_exception_data("QuizAnswers", [])
+
     logger.info(llm_response.ThinkingSpace)
 
-    answer_objects = [x for x in llm_response][1:]
-    answers_in_order = [x[1]._value_ for x in answer_objects if not isinstance(x, str)]
+    # Iterate quiz_model fields in declaration order, skipping ThinkingSpace
+    answers_in_order = [
+        getattr(llm_response, name).value
+        for name in quiz_model.model_fields
+        if name != "ThinkingSpace"
+    ]
     logger.info(answers_in_order)
 
     result_scores = {result: 0 for result in results}
@@ -69,9 +101,9 @@ async def answer_questions(quiz_json, llm, prompt, character_description, exampl
 
 
 async def calculate_title(
-    character_description, class_quiz_json, aspect_quiz_json
+    character_description: str, class_quiz_json: dict, aspect_quiz_json: dict
 ) -> ParadoxEngineOutput:
-    llm = ChatAnthropic(model="claude-sonnet-4-6")
+    llm = ChatAnthropic(model="claude-sonnet-4-5-20250929", max_tokens=8192)
 
     # Class and aspect quizzes are independent, run them concurrently
     class_result, aspect_result = await asyncio.gather(
@@ -99,7 +131,7 @@ async def calculate_title(
     class_prompt = CLASS_PROMPTS[class_result.lower()]
     aspect_prompt = ASPECT_PROMPTS[aspect_result.lower()]
 
-    llm = ChatAnthropic(model="claude-sonnet-4-6")
+    llm = ChatAnthropic(model="claude-sonnet-4-5-20250929", max_tokens=8192)
     prompt = ChatPromptTemplate(
         [
             ("system", PARADOX_ENGINE_PROMPT),
