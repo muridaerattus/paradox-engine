@@ -1,7 +1,7 @@
 from dotenv import load_dotenv, find_dotenv
 from alchemy.models import Item, format_name
 import os
-from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select
 
@@ -12,7 +12,7 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable is not set.")
 engine = create_async_engine(DATABASE_URL, echo=True)
-async_session = AsyncSession(engine, expire_on_commit=False)
+session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
 async def get_item_by_name_or_code(name_or_code: str) -> Item | None:
@@ -22,20 +22,18 @@ async def get_item_by_name_or_code(name_or_code: str) -> Item | None:
     :param name_or_code: The name or code of the item to retrieve
     :return: An Item instance if found, otherwise None
     """
-    async with async_session as session:
-        async with session.begin():
-            result = await session.exec(select(Item).where((Item.code == name_or_code)))
-            item = result.first()
-            if item:
-                return item
-            else:
-                # If no item found by code, try by name
-                name_or_code = format_name(name_or_code)
-                result = await session.exec(
-                    select(Item).where((Item.name == name_or_code))
-                )
-            item = result.first()
+    # no write needed, so we can use a regular session
+    async with session_maker() as session:
+        result = await session.exec(select(Item).where((Item.code == name_or_code)))
+        item = result.first()
+        if item:
             return item
+        else:
+            # If no item found by code, try by name
+            name_or_code = format_name(name_or_code)
+            result = await session.exec(select(Item).where((Item.name == name_or_code)))
+        item = result.first()
+        return item
 
 
 async def get_item_by_code(code: str) -> Item | None:
@@ -45,9 +43,9 @@ async def get_item_by_code(code: str) -> Item | None:
     :param code: The code or name of the item to retrieve
     :return: An Item instance if found, otherwise None
     """
-    async with async_session as session:
-        async with session.begin():
-            result = await session.exec(select(Item).where((Item.code == code)))
+    # no write needed, so we can use a regular session
+    async with session_maker() as session:
+        result = await session.exec(select(Item).where((Item.code == code)))
         item = result.first()
         return item
 
@@ -59,11 +57,9 @@ async def insert_item(item: Item) -> Item:
     :param item: An Item instance to insert
     :return: The inserted Item instance
     """
-    async with async_session as session:
-        async with session.begin():
-            session.add(item)
-            await session.commit()
-            return item
+    async with session_maker.begin() as session:
+        session.add(item)
+    return item
 
 
 async def update_item(item: Item) -> Item:
@@ -75,8 +71,6 @@ async def update_item(item: Item) -> Item:
     :return: updated Item instance
     :rtype: Item
     """
-    async with async_session as session:
-        async with session.begin():
-            await session.merge(item)
-            await session.commit()
-            return item
+    async with session_maker.begin() as session:
+        merged_item = await session.merge(item)
+        return merged_item
