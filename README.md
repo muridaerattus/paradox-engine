@@ -108,6 +108,12 @@ I manage dependencies with `uv`, because it's fast. Before all this, use `pip in
 
 **Note:** The Discord bot requires the FastAPI engine to be running and accessible at the configured API URL (default: http://localhost:8000).
 
+## Licensing
+
+All code is available under the Apache 2.0 license.
+
+All .md files in `/prompts` are copyrighted with respect to their original authors, listed below, used with permission where applicable.
+
 ## Credits
 
 Classpect knowledge given by my good friends @reachartwork and Tamago, used with permission.
