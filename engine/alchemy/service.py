@@ -1,3 +1,5 @@
+import asyncio
+
 from alchemy.models import (
     Item,
     AlchemizedItem,
@@ -12,10 +14,13 @@ from database.alchemy_database import (
     insert_item,
 )
 from langchain_together import ChatTogether
-from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser, PydanticOutputParser
-from settings import PROMPTS_DIRECTORY
-import aiofiles
+
+from prompt_library import (
+    ITEM_DESCRIPTION_CHAT_PROMPT,
+    ITEM_GENERATOR_CHAT_PROMPT,
+    ITEM_TAGLINE_CHAT_PROMPT,
+)
 
 
 async def alchemize_items(
@@ -30,15 +35,28 @@ async def alchemize_items(
     :return: A new Item instance with a combined alchemy code
     """
 
-    item_1 = await get_item_by_name_or_code(item_1_name)
-    item_2 = await get_item_by_name_or_code(item_2_name)
+    item_1, item_2 = await asyncio.gather(
+        get_item_by_name_or_code(item_1_name),
+        get_item_by_name_or_code(item_2_name),
+    )
 
-    if not item_1:
+    if not item_1 and not item_2:
+        if item_1_name == item_2_name:
+            item_1 = await new_item(item_1_name)
+            await insert_item(item_1)
+            item_2 = item_1  # Sorry to ruin the fun :)
+        else:
+            item_1, item_2 = await asyncio.gather(
+                new_item(item_1_name),
+                new_item(item_2_name),
+            )
+            await asyncio.gather(insert_item(item_1), insert_item(item_2))
+    elif not item_1:
         item_1 = await new_item(item_1_name)
         await insert_item(item_1)
-    if not item_2:
+    elif not item_2:
         if item_1_name == item_2_name:
-            item_2 = item_1 # Sorry to ruin the fun :)
+            item_2 = item_1  # Sorry to ruin the fun :)
         else:
             item_2 = await new_item(item_2_name)
             await insert_item(item_2)
@@ -96,31 +114,10 @@ async def generate_item(item_1: Item, item_2: Item, operation: Operation) -> Ite
     if existing_item:
         return existing_item
 
-    item_name_prompt = None
-    async with aiofiles.open(f"{PROMPTS_DIRECTORY}/alchemy/item_generator.md") as f:
-        item_name_prompt = await f.read()
-
-    prompt = ChatPromptTemplate(
-        [
-            ("system", item_name_prompt),
-            (
-                "user",
-                """
-         Item 1: {item_1_name}
-         Item 1 Components: {item_1_components}
-         Item 1 Description: {item_1_description}
-         
-         Item 2: {item_2_name}
-         Item 2 Components: {item_2_components}
-         Item 2 Description: {item_2_description}
-         Operation: {operation}""",
-            ),
-        ]
-    )
     llm = ChatTogether(model="meta-llama/Llama-3.3-70B-Instruct-Turbo")
     parser = PydanticOutputParser(pydantic_object=AlchemizedItem)
     format_instructions = parser.get_format_instructions()
-    llm_chain = prompt | llm | parser
+    llm_chain = ITEM_GENERATOR_CHAT_PROMPT | llm | parser
 
     alchemized_item: AlchemizedItem = await llm_chain.ainvoke(
         {
@@ -140,7 +137,9 @@ async def generate_item(item_1: Item, item_2: Item, operation: Operation) -> Ite
         components=combined_components,
         name=alchemized_item.name,
         description=alchemized_item.description,
-        tagline=await generate_tagline(alchemized_item.name, alchemized_item.description),
+        tagline=await generate_tagline(
+            alchemized_item.name, alchemized_item.description
+        ),
     )
 
 
@@ -152,17 +151,10 @@ async def generate_description(name: str) -> str:
     :param name: Name of the item
     :return: A generated description string
     """
-    item_description_prompt = None
-    async with aiofiles.open(
-        f"{PROMPTS_DIRECTORY}/alchemy/item_description_generator.md"
-    ) as f:
-        item_description_prompt = await f.read()
-
-    prompt = ChatPromptTemplate([("system", item_description_prompt), ("user", name)])
     llm = ChatTogether(model="meta-llama/Llama-3.3-70B-Instruct-Turbo")
-    llm_chain = prompt | llm | StrOutputParser()
+    llm_chain = ITEM_DESCRIPTION_CHAT_PROMPT | llm | StrOutputParser()
+    return await llm_chain.ainvoke({"name": name})
 
-    return await llm_chain.ainvoke({})
 
 async def generate_tagline(name: str, description: str) -> str:
     """
@@ -172,14 +164,6 @@ async def generate_tagline(name: str, description: str) -> str:
     :param description: Description of the item
     :return: A generated tagline string
     """
-    item_tagline_prompt = None
-    async with aiofiles.open(
-        f"{PROMPTS_DIRECTORY}/alchemy/item_tagline_generator.md"
-    ) as f:
-        item_tagline_prompt = await f.read()
-
-    prompt = ChatPromptTemplate([("system", item_tagline_prompt), ("user", f"{name}\n{description}")])
     llm = ChatTogether(model="meta-llama/Llama-3.3-70B-Instruct-Turbo")
-    llm_chain = prompt | llm | StrOutputParser()
-
-    return await llm_chain.ainvoke({})
+    llm_chain = ITEM_TAGLINE_CHAT_PROMPT | llm | StrOutputParser()
+    return await llm_chain.ainvoke({"name": name, "description": description})

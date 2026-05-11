@@ -64,11 +64,12 @@ async def insert_item(item: Item) -> Item:
             session.add(item)
             await session.commit()
             return item
-        
+
+
 async def update_item(item: Item) -> Item:
     """
     Update an item in the database.
-    
+
     :param item: Item instance to update
     :type item: Item
     :return: updated Item instance

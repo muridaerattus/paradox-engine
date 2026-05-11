@@ -1,10 +1,9 @@
 from fraymotifs.models import Title, Fraymotif
 from fraymotifs.utils import format_titles
-from settings import PROMPTS_DIRECTORY
 from langchain_anthropic import ChatAnthropic
-from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
-import aiofiles
+
+from prompt_library import ASPECT_PROMPTS, FRAYMOTIF_CHAT_PROMPT
 
 
 async def generate_aspect_context(titles: list[Title]) -> str:
@@ -18,13 +17,8 @@ async def generate_aspect_context(titles: list[Title]) -> str:
     for title in titles:
         if not title.title_aspect:
             raise ValueError("All titles must have an aspect defined.")
-        async with aiofiles.open(
-            f"{PROMPTS_DIRECTORY}/aspects/{title.title_aspect.lower()}.md"
-        ) as f:
-            aspect_info = await f.read()
-            total_aspect_info += (
-                f"Aspect: {title.title_aspect}\nInfo: {aspect_info}\n\n"
-            )
+        aspect_info = ASPECT_PROMPTS[title.title_aspect.lower()]
+        total_aspect_info += f"Aspect: {title.title_aspect}\nInfo: {aspect_info}\n\n"
 
     return total_aspect_info.strip()
 
@@ -41,28 +35,11 @@ async def create_fraymotif(
     if len(titles) < 1:
         raise ValueError("At least one title is required to create a fraymotif.")
 
-    async with aiofiles.open(
-        f"{PROMPTS_DIRECTORY}/fraymotifs/fraymotif_generator.md"
-    ) as f:
-        fraymotif_prompt = await f.read()
     aspect_context = await generate_aspect_context(titles)
-    prompt = ChatPromptTemplate(
-        [
-            ("system", fraymotif_prompt),
-            (
-                "user",
-                """
-         Player Titles: {players}
-         Memory: {memory}
-         Additional Info: {additional_info}
-         Context for each aspect: {aspect_context}""",
-            ),
-        ]
-    )
-    llm = ChatAnthropic(model="claude-sonnet-4-5-20250929")
+    llm = ChatAnthropic(model="claude-sonnet-4-6")
     parser = PydanticOutputParser(pydantic_object=Fraymotif)
     format_instructions = parser.get_format_instructions()
-    llm_chain = prompt | llm | parser
+    llm_chain = FRAYMOTIF_CHAT_PROMPT | llm | parser
     players_formatted = format_titles(titles)
     fraymotif: Fraymotif = await llm_chain.ainvoke(
         {

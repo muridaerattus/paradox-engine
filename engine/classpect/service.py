@@ -1,11 +1,21 @@
-import aiofiles
-import random
+import asyncio
 import logging
+import random
+
 from langchain_anthropic import ChatAnthropic
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
+
 from classpect.models import ParadoxEngineOutput
 from classpect.utils import format_answer_string, quiz_to_model, generate_question_list
+from prompt_library import (
+    ASPECT_EXAMPLE,
+    ASPECT_PROMPTS,
+    CLASS_EXAMPLE,
+    CLASS_PROMPTS,
+    PARADOX_ENGINE_PROMPT,
+    QUIZ_ANSWERER_CHAT_PROMPT,
+)
 
 
 logging.basicConfig(level=logging.INFO)
@@ -61,29 +71,24 @@ async def answer_questions(quiz_json, llm, prompt, character_description, exampl
 async def calculate_title(
     character_description, class_quiz_json, aspect_quiz_json
 ) -> ParadoxEngineOutput:
-    llm = ChatAnthropic(model="claude-sonnet-4-5-20250929")  # Untested.
-    async with aiofiles.open("prompts/quiz_answerer.md") as f:
-        quiz_answerer_prompt_text = await f.read()
-    quiz_answerer_prompt = ChatPromptTemplate(
-        [("system", quiz_answerer_prompt_text), ("user", "QUESTIONS:\n{questions}")]
-    )
+    llm = ChatAnthropic(model="claude-sonnet-4-6")
 
-    class_example = None
-    aspect_example = None
-    async with aiofiles.open("prompts/class_example.md") as f:
-        class_example = await f.read()
-    async with aiofiles.open("prompts/aspect_example.md") as f:
-        aspect_example = await f.read()
-
-    class_result = await answer_questions(
-        class_quiz_json, llm, quiz_answerer_prompt, character_description, class_example
-    )
-    aspect_result = await answer_questions(
-        aspect_quiz_json,
-        llm,
-        quiz_answerer_prompt,
-        character_description,
-        aspect_example,
+    # Class and aspect quizzes are independent, run them concurrently
+    class_result, aspect_result = await asyncio.gather(
+        answer_questions(
+            class_quiz_json,
+            llm,
+            QUIZ_ANSWERER_CHAT_PROMPT,
+            character_description,
+            CLASS_EXAMPLE,
+        ),
+        answer_questions(
+            aspect_quiz_json,
+            llm,
+            QUIZ_ANSWERER_CHAT_PROMPT,
+            character_description,
+            ASPECT_EXAMPLE,
+        ),
     )
 
     class_result = class_result.split(" ")[0].capitalize()
@@ -91,22 +96,13 @@ async def calculate_title(
 
     logger.info(f"Final answer: {class_result} of {aspect_result}")
 
-    # retrieve class and aspect summaries
-    class_prompt = None
-    aspect_prompt = None
-    paradox_engine_prompt = None
+    class_prompt = CLASS_PROMPTS[class_result.lower()]
+    aspect_prompt = ASPECT_PROMPTS[aspect_result.lower()]
 
-    async with aiofiles.open(f"prompts/classes/{class_result.lower()}.md") as f:
-        class_prompt = await f.read()
-    async with aiofiles.open(f"prompts/aspects/{aspect_result.lower()}.md") as f:
-        aspect_prompt = await f.read()
-    async with aiofiles.open("prompts/paradox_engine.md") as f:
-        paradox_engine_prompt = await f.read()
-
-    llm = ChatAnthropic(model="claude-sonnet-4-5-20250929")
+    llm = ChatAnthropic(model="claude-sonnet-4-6")
     prompt = ChatPromptTemplate(
         [
-            ("system", paradox_engine_prompt),
+            ("system", PARADOX_ENGINE_PROMPT),
             ("user", f"{class_result} of {aspect_result}"),
         ]
     )

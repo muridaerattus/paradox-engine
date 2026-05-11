@@ -9,15 +9,23 @@ from fraymotifs.models import Title
 from fraymotifs.service import create_fraymotif
 from fraymotifs.utils import split_titles
 from database.alchemy_database import get_item_by_code
-from settings import API_ROOT_PATH, CLASS_QUIZ_FILENAME, ASPECT_QUIZ_FILENAME, TERMINAL_URL, ENABLE_DOCS
+from settings import (
+    API_ROOT_PATH,
+    CLASS_QUIZ_FILENAME,
+    ASPECT_QUIZ_FILENAME,
+    TERMINAL_URL,
+    ENABLE_DOCS,
+)
 import json
 
 app = FastAPI(
-    openapi_url=f"{API_ROOT_PATH}/openapi.json" if ENABLE_DOCS.lower() == 'true' else None,
-    docs_url=f"{API_ROOT_PATH}/docs" if ENABLE_DOCS.lower() == 'true' else None,
-    redoc_url=f"{API_ROOT_PATH}/redoc" if ENABLE_DOCS.lower() == 'true' else None,
-    root_path=API_ROOT_PATH
-    )
+    openapi_url=f"{API_ROOT_PATH}/openapi.json"
+    if ENABLE_DOCS.lower() == "true"
+    else None,
+    docs_url=f"{API_ROOT_PATH}/docs" if ENABLE_DOCS.lower() == "true" else None,
+    redoc_url=f"{API_ROOT_PATH}/redoc" if ENABLE_DOCS.lower() == "true" else None,
+    root_path=API_ROOT_PATH,
+)
 
 # Configure CORS
 origins = ["http://localhost:3000"]
@@ -98,7 +106,7 @@ async def captchalogue(code: str):
             raise HTTPException(status_code=404, detail="Item not found")
         return {
             "name": item.name,
-            "code": item.code, 
+            "code": item.code,
             "description": item.description,
             "tagline": item.tagline,
         }
