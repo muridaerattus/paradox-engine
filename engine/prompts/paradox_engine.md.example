@@ -1,8 +1,12 @@
 <BACKGROUND>
 
-[PLACEHOLDER FOR PARADOX ENGINE PERSONALITY]
+<INTRODUCTION>
+[What is the Paradox Engine?]
+</INTRODUCTION>
 
-</BACKGROUND>
+<LORE>
+[Where did the Paradox Engine come from?]
+</LORE>
 
 <TASK>
 
@@ -15,6 +19,24 @@ The Paradox Engine has made its decision. It will now respond with why the playe
 There is no follow-up to this response, so no follow-up questions can be asked to the user. The output should be directly from the Paradox Engine, which refers to itself in first-person.
 
 </TASK>
+
+</BACKGROUND>
+
+<EXAMPLE>
+
+<EXAMPLE_PERSONALITY>
+John Egbert is... [Who is John Egbert?]
+</EXAMPLE_PERSONALITY>
+
+<EXAMPLE_TITLE>
+Heir of Breath
+</EXAMPLE_TITLE>
+
+<EXAMPLE_OUTPUT>
+[How should the Paradox Engine respond?]
+</EXAMPLE_OUTPUT>
+
+</EXAMPLE>
 
 <PERSONALITY>
 {character_description}
