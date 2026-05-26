@@ -17,3 +17,6 @@ alembic.ini
 *.db
 
 log.txt
+
+classpect/generated/
+experiments/classpect/generated/
