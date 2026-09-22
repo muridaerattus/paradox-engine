@@ -120,7 +120,11 @@ async def captchalogue(code: str):
 @app.post("/fraymotif")
 async def fraymotif(req: FraymotifRequest):
     try:
-        classes, aspects = split_titles(req.players)
+        try:
+            classes, aspects = split_titles(req.players)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
         if not classes or not aspects:
             logging.warning(f"Invalid titles in /fraymotif: {req.players}")
             raise HTTPException(
