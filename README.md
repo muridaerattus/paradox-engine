@@ -54,18 +54,31 @@ I personally like Claude's interpretation of the Paradox Engine the most, just b
 
 ## Instructions
 
-### Docker (deprecated for now)
+### Docker
 
-```
-docker run --env-file path/to/your/env-file \
--v /path/to/your/prompts:/app/prompts \
--v /path/to/quiz/class_quiz.json:/app/class_quiz.json \
--v /path/to/quiz/aspect_quiz.json:/app/aspect_quiz.json \
--v ./paradox.db:/app/paradox.db \
-muridaerattus/paradox-engine
+Docker runs the FastAPI engine. The prompt directory and quiz files are runtime inputs and are not included in the image.
+
+From the `engine` directory, create the Docker environment file and build the image:
+
+```bash
+cp .docker.env.example .docker.env
+docker build -t paradox-engine .
 ```
 
-It's about the same amount of work to update, but at least I can start and stop it in the background.
+Fill in the required values in `.docker.env`, then start the engine:
+
+```bash
+docker run --name paradox-engine --restart unless-stopped \
+  --env-file .docker.env \
+  -p 8000:8000 \
+  -v paradox-data:/data \
+  -v "$PWD/prompts:/app/prompts:ro" \
+  -v "$PWD/class_quiz.json:/app/class_quiz.json:ro" \
+  -v "$PWD/aspect_quiz.json:/app/aspect_quiz.json:ro" \
+  paradox-engine
+```
+
+The container applies database migrations and preloads the bundled example objects before serving the API. The named `paradox-data` volume preserves the SQLite database across container replacements. By default, the API is available at http://localhost:8000.
 
 ### Manual
 

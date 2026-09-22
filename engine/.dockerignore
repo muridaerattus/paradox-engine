@@ -1,4 +1,7 @@
 __pycache__/
+.venv/
+.pytest_cache/
+.ruff_cache/
 *.pyc
 *.pyo
 *.pyd
@@ -8,12 +11,12 @@ __pycache__/
 *.sqlite3
 *.sqlite
 *.log
-*.lock
 .idea/
 .vscode/
 .git/
 .gitignore
 alembic.ini
+tests/
 prompts/
 aspect_quiz.json
 class_quiz.json

@@ -1,16 +1,10 @@
-from dotenv import load_dotenv, find_dotenv
 from alchemy.models import Item, format_name
-import os
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select
+from settings import DATABASE_URL
 
 
-load_dotenv(find_dotenv())
-
-DATABASE_URL = os.environ.get("DATABASE_URL")
-if not DATABASE_URL:
-    raise ValueError("DATABASE_URL environment variable is not set.")
 engine = create_async_engine(DATABASE_URL, echo=True)
 session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
