@@ -3,20 +3,19 @@ import logging
 import random
 
 from pydantic import ValidationError
-from langchain_anthropic import ChatAnthropic
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import PydanticOutputParser
 
 from classpect.models import ParadoxEngineOutput
 from classpect.utils import format_answer_string, quiz_to_model, generate_question_list
+from llm import generate_structured, generate_text
 from prompt_library import (
     ASPECT_EXAMPLE,
     ASPECT_PROMPTS,
+    build_paradox_engine_messages,
+    build_quiz_answerer_messages,
     CLASS_EXAMPLE,
     CLASS_PROMPTS,
-    PARADOX_ENGINE_PROMPT,
-    QUIZ_ANSWERER_CHAT_PROMPT,
 )
+from settings import CLASSPECT_MODEL
 
 
 logging.basicConfig(level=logging.INFO)
@@ -25,8 +24,6 @@ logger = logging.getLogger(__name__)
 
 async def answer_questions(
     quiz_json: dict,
-    llm,
-    prompt: ChatPromptTemplate,
     character_description: str,
     example: str,
 ) -> str:
@@ -39,37 +36,20 @@ async def answer_questions(
     quiz_model = await quiz_to_model(quiz_json)
     question_list = await generate_question_list(quiz_json)
 
-    structured_llm = llm.with_structured_output(quiz_model, include_raw=True)
-    parser = PydanticOutputParser(pydantic_object=quiz_model)
-    prompted_llm = prompt | structured_llm
-    raw_result = await prompted_llm.ainvoke(
-        {
-            "character_description": character_description,
-            "format_instructions": parser.get_format_instructions(),
-            "questions": question_list,
-            "example": example,
-        }
-    )
-
-    parsing_error = (
-        raw_result.get("parsing_error") if isinstance(raw_result, dict) else None
-    )
-    llm_response = (
-        raw_result.get("parsed") if isinstance(raw_result, dict) else raw_result
-    )
-    if parsing_error is not None or llm_response is None:
-        raw_message = (
-            raw_result.get("raw") if isinstance(raw_result, dict) else raw_result
+    try:
+        llm_response = await generate_structured(
+            model=CLASSPECT_MODEL,
+            messages=build_quiz_answerer_messages(
+                character_description=character_description,
+                questions=question_list,
+                example=example,
+            ),
+            output_type=quiz_model,
+            max_tokens=8192,
         )
-        logger.error(
-            "Quiz answerer failed to produce a valid structured response. "
-            "parsing_error=%r raw=%r",
-            parsing_error,
-            raw_message,
-        )
-        if isinstance(parsing_error, BaseException):
-            raise parsing_error
-        raise ValidationError.from_exception_data("QuizAnswers", [])
+    except ValidationError:
+        logger.exception("Quiz answerer failed to produce a valid response")
+        raise
 
     logger.info(llm_response.ThinkingSpace)
 
@@ -103,21 +83,15 @@ async def answer_questions(
 async def calculate_title(
     character_description: str, class_quiz_json: dict, aspect_quiz_json: dict
 ) -> ParadoxEngineOutput:
-    llm = ChatAnthropic(model="claude-sonnet-4-5-20250929", max_tokens=8192)
-
     # Class and aspect quizzes are independent, run them concurrently
     class_result, aspect_result = await asyncio.gather(
         answer_questions(
             class_quiz_json,
-            llm,
-            QUIZ_ANSWERER_CHAT_PROMPT,
             character_description,
             CLASS_EXAMPLE,
         ),
         answer_questions(
             aspect_quiz_json,
-            llm,
-            QUIZ_ANSWERER_CHAT_PROMPT,
             character_description,
             ASPECT_EXAMPLE,
         ),
@@ -131,24 +105,20 @@ async def calculate_title(
     class_prompt = CLASS_PROMPTS[class_result.lower()]
     aspect_prompt = ASPECT_PROMPTS[aspect_result.lower()]
 
-    llm = ChatAnthropic(model="claude-sonnet-4-5-20250929", max_tokens=8192)
-    prompt = ChatPromptTemplate(
-        [
-            ("system", PARADOX_ENGINE_PROMPT),
-            ("user", f"{class_result} of {aspect_result}"),
-        ]
-    )
-    prompted_llm = prompt | llm
-    llm_response = await prompted_llm.ainvoke(
-        {
-            "character_description": character_description,
-            "class_data": class_prompt,
-            "aspect_data": aspect_prompt,
-        }
+    title = f"{class_result} of {aspect_result}"
+    llm_response = await generate_text(
+        model=CLASSPECT_MODEL,
+        messages=build_paradox_engine_messages(
+            character_description=character_description,
+            class_data=class_prompt,
+            aspect_data=aspect_prompt,
+            title=title,
+        ),
+        max_tokens=8192,
     )
 
     return ParadoxEngineOutput(
         class_result=class_result,
         aspect_result=aspect_result,
-        llm_response=llm_response.content,
+        llm_response=llm_response,
     )

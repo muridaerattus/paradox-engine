@@ -13,14 +13,14 @@ from database.alchemy_database import (
     get_item_by_code,
     insert_item,
 )
-from langchain_together import ChatTogether
-from langchain_core.output_parsers import StrOutputParser, PydanticOutputParser
+from llm import generate_structured, generate_text
 
 from prompt_library import (
-    ITEM_DESCRIPTION_CHAT_PROMPT,
-    ITEM_GENERATOR_CHAT_PROMPT,
-    ITEM_TAGLINE_CHAT_PROMPT,
+    build_item_description_messages,
+    build_item_tagline_messages,
+    item_generator_messages,
 )
+from settings import ALCHEMY_MODEL
 
 
 async def alchemize_items(
@@ -114,22 +114,18 @@ async def generate_item(item_1: Item, item_2: Item, operation: Operation) -> Ite
     if existing_item:
         return existing_item
 
-    llm = ChatTogether(model="meta-llama/Llama-3.3-70B-Instruct-Turbo")
-    parser = PydanticOutputParser(pydantic_object=AlchemizedItem)
-    format_instructions = parser.get_format_instructions()
-    llm_chain = ITEM_GENERATOR_CHAT_PROMPT | llm | parser
-
-    alchemized_item: AlchemizedItem = await llm_chain.ainvoke(
-        {
-            "item_1_name": item_1.name,
-            "item_1_components": item_1.components,
-            "item_1_description": item_1.description,
-            "item_2_name": item_2.name,
-            "item_2_components": item_2.components,
-            "item_2_description": item_2.description,
-            "operation": operation,
-            "format_instructions": format_instructions,
-        }
+    alchemized_item = await generate_structured(
+        model=ALCHEMY_MODEL,
+        messages=item_generator_messages(
+            item_1_name=item_1.name,
+            item_1_components=item_1.components,
+            item_1_description=item_1.description,
+            item_2_name=item_2.name,
+            item_2_components=item_2.components,
+            item_2_description=item_2.description,
+            operation=operation,
+        ),
+        output_type=AlchemizedItem,
     )
 
     return Item(
@@ -151,9 +147,10 @@ async def generate_description(name: str) -> str:
     :param name: Name of the item
     :return: A generated description string
     """
-    llm = ChatTogether(model="meta-llama/Llama-3.3-70B-Instruct-Turbo")
-    llm_chain = ITEM_DESCRIPTION_CHAT_PROMPT | llm | StrOutputParser()
-    return await llm_chain.ainvoke({"name": name})
+    return await generate_text(
+        model=ALCHEMY_MODEL,
+        messages=build_item_description_messages(name=name),
+    )
 
 
 async def generate_tagline(name: str, description: str) -> str:
@@ -164,6 +161,10 @@ async def generate_tagline(name: str, description: str) -> str:
     :param description: Description of the item
     :return: A generated tagline string
     """
-    llm = ChatTogether(model="meta-llama/Llama-3.3-70B-Instruct-Turbo")
-    llm_chain = ITEM_TAGLINE_CHAT_PROMPT | llm | StrOutputParser()
-    return await llm_chain.ainvoke({"name": name, "description": description})
+    return await generate_text(
+        model=ALCHEMY_MODEL,
+        messages=build_item_tagline_messages(
+            name=name,
+            description=description,
+        ),
+    )
