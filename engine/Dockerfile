@@ -1,30 +1,40 @@
-FROM python:3.12-slim
+FROM python:3.12-slim AS builder
 
 WORKDIR /app
 
-# Remove paradox.db if it exists as a directory
-RUN [ ! -d /app/paradox.db ] || rm -rf /app/paradox.db
+RUN pip install --no-cache-dir uv
 
-# Set PYTHONPATH so modules are found
-ENV PYTHONPATH=/app
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev --no-install-project
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    libffi-dev \
-    && rm -rf /var/lib/apt/lists/*
 
-# Copy project files
-COPY . /app
+FROM python:3.12-slim AS runtime
 
-# Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir uv \
-    && uv sync \
-    && uv lock
+WORKDIR /app
 
-# Entrypoint script
-COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+ENV PATH="/app/.venv/bin:$PATH" \
+    PYTHONPATH=/app \
+    PYTHONUNBUFFERED=1 \
+    DATABASE_URL=sqlite+aiosqlite:////data/paradox.db \
+    CLASS_QUIZ_FILENAME=/app/class_quiz.json \
+    ASPECT_QUIZ_FILENAME=/app/aspect_quiz.json \
+    PROMPTS_DIRECTORY=/app/prompts
+
+RUN useradd --create-home --uid 10001 app \
+    && mkdir /data \
+    && chown app:app /data
+
+COPY --from=builder /app/.venv /app/.venv
+COPY --chown=app:app . /app
+
 RUN chmod +x /app/docker-entrypoint.sh
+
+USER app
+
+EXPOSE 8000
+VOLUME ["/data"]
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/', timeout=3)"]
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]

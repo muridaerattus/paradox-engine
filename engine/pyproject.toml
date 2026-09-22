@@ -11,11 +11,15 @@ dependencies = [
     "fastapi>=0.116.1",
     "openrouter>=1.2.15",
     "pydantic>=2.11.7",
-    "pytest>=8.4.1",
-    "ruff>=0.12.4",
     "sqlalchemy>=2.0.41",
     "sqlmodel[asyncio]>=0.0.24",
     "uvicorn>=0.51.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "ruff>=0.12.4",
 ]
 
 [tool.pytest.ini_options]
