@@ -10,7 +10,9 @@ from fastapi.responses import JSONResponse
 from paradox_engine.alchemy import repository
 from paradox_engine.alchemy.service import AlchemyService
 from paradox_engine.api.routers import alchemy, classpect, fraymotifs, health
+from paradox_engine.api.rate_limit import IPRateLimiter
 from paradox_engine.classpect.service import ClasspectService
+from paradox_engine.classpect.thread_service import ClasspectThreadService
 from paradox_engine.config import Settings, get_settings
 from paradox_engine.fraymotifs.service import FraymotifService
 from paradox_engine.llm import LLMClient
@@ -38,6 +40,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def lifespan(app: FastAPI):
         prompts = PromptLibrary.load(settings.prompts_directory)
         llm = LLMClient(settings.openrouter_api_key)
+        class_quiz = _load_quiz(settings.class_quiz_filename)
+        aspect_quiz = _load_quiz(settings.aspect_quiz_filename)
+        classpect_service = ClasspectService(
+            llm=llm,
+            prompts=prompts,
+            settings=settings,
+        )
         app.state.resources = RuntimeResources(
             alchemy=AlchemyService(
                 repository=repository,
@@ -45,18 +54,22 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 prompts=prompts,
                 model=settings.alchemy_model,
             ),
-            classpect=ClasspectService(
+            classpect=classpect_service,
+            classpect_threads=ClasspectThreadService(
                 llm=llm,
                 prompts=prompts,
                 settings=settings,
+                classpect=classpect_service,
+                class_quiz=class_quiz,
+                aspect_quiz=aspect_quiz,
             ),
             fraymotifs=FraymotifService(
                 llm=llm,
                 prompts=prompts,
                 model=settings.fraymotif_model,
             ),
-            class_quiz=_load_quiz(settings.class_quiz_filename),
-            aspect_quiz=_load_quiz(settings.aspect_quiz_filename),
+            class_quiz=class_quiz,
+            aspect_quiz=aspect_quiz,
         )
         try:
             yield
@@ -70,6 +83,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         docs_url="/docs" if settings.enable_docs else None,
         redoc_url="/redoc" if settings.enable_docs else None,
     )
+    app.state.rate_limiter = IPRateLimiter()
     if settings.parsed_cors_origins:
         app.add_middleware(
             CORSMiddleware,
@@ -82,7 +96,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.exception_handler(Exception)
     async def unhandled_exception(request: Request, exc: Exception) -> JSONResponse:
         logger.exception("Unhandled request error", extra={"path": request.url.path})
-        return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+        return JSONResponse(
+            status_code=500, content={"detail": "Internal server error"}
+        )
 
     app.include_router(health.router)
     app.include_router(classpect.router)

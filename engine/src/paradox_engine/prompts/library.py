@@ -23,6 +23,8 @@ class PromptLibrary:
     class_example: str
     aspect_example: str
     paradox_engine: str
+    classpect_interviewer: str
+    classpect_thread_opening: str
     fraymotif_generator: str
     item_generator: str
     item_description_generator: str
@@ -37,10 +39,14 @@ class PromptLibrary:
             class_example=_read_text(root / "class_example.md"),
             aspect_example=_read_text(root / "aspect_example.md"),
             paradox_engine=_read_text(root / "paradox_engine.md"),
+            classpect_interviewer=_read_text(root / "classpect_interviewer.md"),
+            classpect_thread_opening=_read_text(root / "classpect_thread_opening.md"),
             fraymotif_generator=_read_text(root / "fraymotifs/fraymotif_generator.md"),
             item_generator=_read_text(root / "alchemy/item_generator.md"),
             item_description_generator=_read_text(
                 root / "alchemy/item_description_generator.md"
             ),
-            item_tagline_generator=_read_text(root / "alchemy/item_tagline_generator.md"),
+            item_tagline_generator=_read_text(
+                root / "alchemy/item_tagline_generator.md"
+            ),
         )

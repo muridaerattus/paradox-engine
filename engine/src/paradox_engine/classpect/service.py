@@ -106,8 +106,7 @@ class ClasspectService:
         answer_indexes = []
         for question, answer in zip(quiz_json, answers_in_order):
             answers_by_text = {
-                item["answer"]: index
-                for index, item in enumerate(question["answers"])
+                item["answer"]: index for index, item in enumerate(question["answers"])
             }
             answer_indexes.append(answers_by_text[answer])
         return self.score_answers(quiz_json, answer_indexes)
@@ -161,6 +160,35 @@ class ClasspectService:
             ),
         )
 
+        return await self.generate_title(
+            character_description,
+            class_result=class_result,
+            aspect_result=aspect_result,
+        )
+
+    async def calculate_title_from_answers(
+        self,
+        character_description: str,
+        class_quiz_json: list[dict],
+        aspect_quiz_json: list[dict],
+        class_answer_indexes: list[int],
+        aspect_answer_indexes: list[int],
+    ) -> ParadoxEngineOutput:
+        class_result = self.score_answers(class_quiz_json, class_answer_indexes)
+        aspect_result = self.score_answers(aspect_quiz_json, aspect_answer_indexes)
+        return await self.generate_title(
+            character_description,
+            class_result=class_result,
+            aspect_result=aspect_result,
+        )
+
+    async def generate_title(
+        self,
+        character_description: str,
+        *,
+        class_result: str,
+        aspect_result: str,
+    ) -> ParadoxEngineOutput:
         class_result = class_result.split(" ")[0].capitalize()
         aspect_result = aspect_result.capitalize()
 

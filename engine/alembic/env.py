@@ -10,6 +10,10 @@ from paradox_engine.config import get_settings
 
 # Models have to be imported for Alembic to recognize them.
 from paradox_engine.alchemy.models import Item  # noqa: F401
+from paradox_engine.classpect.models import (  # noqa: F401
+    ClasspectThread,
+    ClasspectThreadMessage,
+)
 from sqlmodel import SQLModel
 
 # this is the Alembic Config object, which provides

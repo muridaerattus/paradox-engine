@@ -1,13 +1,50 @@
 from typing import Literal, TypeAlias
 
-from openrouter.components import ChatSystemMessageTypedDict, ChatUserMessageTypedDict
+from openrouter.components import (
+    ChatAssistantMessageTypedDict,
+    ChatSystemMessageTypedDict,
+    ChatUserMessageTypedDict,
+)
 
 from paradox_engine.prompts.library import PromptLibrary
 
-ChatMessage: TypeAlias = ChatSystemMessageTypedDict | ChatUserMessageTypedDict
+ChatMessage: TypeAlias = (
+    ChatSystemMessageTypedDict
+    | ChatUserMessageTypedDict
+    | ChatAssistantMessageTypedDict
+)
 STRUCTURED_OUTPUT_INSTRUCTION = (
     "Return a JSON object that matches the response schema supplied with the request."
 )
+
+
+def classpect_interview_messages(
+    prompts: PromptLibrary,
+    *,
+    history: list[dict],
+    unresolved_questions: list[str],
+) -> list[ChatMessage]:
+    persona = prompts.paradox_engine.split("<TASK>", maxsplit=1)[0]
+    if unresolved_questions:
+        coverage_instruction = (
+            "The classifier still lacks sufficient evidence for these quiz items:\n- "
+            + "\n- ".join(unresolved_questions)
+            + "\nAsk one question that will best resolve this missing evidence."
+        )
+    else:
+        coverage_instruction = (
+            "The classifier can confidently answer every class and aspect quiz item. "
+            "Do not ask another question; produce the personality summary."
+        )
+    system_message = {
+        "role": "system",
+        "content": persona
+        + prompts.classpect_interviewer.format(
+            coverage_instruction=coverage_instruction,
+            format_instructions=STRUCTURED_OUTPUT_INSTRUCTION,
+        ),
+    }
+    return [system_message, *history]
 
 
 def quiz_answerer_messages(
@@ -82,7 +119,9 @@ def item_generator_messages(
     ]
 
 
-def item_description_messages(prompts: PromptLibrary, *, name: str) -> list[ChatMessage]:
+def item_description_messages(
+    prompts: PromptLibrary, *, name: str
+) -> list[ChatMessage]:
     return [
         {"role": "system", "content": prompts.item_description_generator},
         {"role": "user", "content": name},
