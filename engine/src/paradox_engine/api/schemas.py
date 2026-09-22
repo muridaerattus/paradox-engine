@@ -1,3 +1,7 @@
+from datetime import datetime
+from typing import Literal
+from uuid import UUID
+
 from pydantic import BaseModel, Field
 
 from paradox_engine.alchemy.models import Operation
@@ -15,6 +19,24 @@ class ClasspectResponse(BaseModel):
     class_: str = Field(alias="class")
     aspect: str
     result: str
+
+
+class ClasspectThreadContinuationRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=10_000)
+
+
+class ClasspectThreadMessageResponse(BaseModel):
+    id: int
+    role: Literal["user", "assistant"]
+    content: str
+    created_at: datetime
+
+
+class ClasspectThreadResponse(BaseModel):
+    thread_id: UUID
+    status: Literal["active", "completed"]
+    messages: list[ClasspectThreadMessageResponse]
+    result: ClasspectResponse | None = None
 
 
 class AlchemizeRequest(BaseModel):

@@ -77,17 +77,46 @@ def test_generate_structured(monkeypatch):
             model="test/model",
             messages=[{"role": "user", "content": "Answer"}],
             output_type=ExampleOutput,
+            reasoning_effort="minimal",
         )
     )
 
     assert result == ExampleOutput(answer="structured")
     assert request["provider"].require_parameters is True
     assert request["provider"].sort == "throughput"
+    assert request["reasoning_effort"] == "minimal"
 
     response_format = request["response_format"].model_dump()
     assert response_format["type"] == "json_schema"
     assert response_format["json_schema"]["strict"] is True
     assert response_format["json_schema"]["schema"]["additionalProperties"] is False
+
+
+def test_generate_structured_retries_response_without_text(monkeypatch):
+    llm = LLMClient(None)
+    responses = [
+        SimpleNamespace(
+            choices=[
+                SimpleNamespace(message=SimpleNamespace(content=None, refusal=None))
+            ]
+        ),
+        _response('{"answer":"retried"}'),
+    ]
+
+    async def send_async(**kwargs):
+        return responses.pop(0)
+
+    monkeypatch.setattr(llm.client.chat, "send_async", send_async)
+    result = asyncio.run(
+        llm.generate_structured(
+            model="test/model",
+            messages=[{"role": "user", "content": "Answer"}],
+            output_type=ExampleOutput,
+        )
+    )
+
+    assert result.answer == "retried"
+    assert responses == []
 
 
 def test_classify_choices(monkeypatch):
@@ -127,6 +156,7 @@ def test_classify_choices(monkeypatch):
 
 def test_classify_choices_rejects_unknown_choice(monkeypatch):
     llm = LLMClient(None)
+
     async def create_async(**kwargs):
         return SimpleNamespace(
             answers={
@@ -171,6 +201,7 @@ def test_classify_choices_rejects_invalid_answers(
     monkeypatch, answers, error_type, message
 ):
     llm = LLMClient(None)
+
     async def create_async(**kwargs):
         return SimpleNamespace(answers=answers)
 

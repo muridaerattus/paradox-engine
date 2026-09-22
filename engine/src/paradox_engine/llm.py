@@ -73,6 +73,7 @@ class LLMClient:
         messages: list[ChatMessage],
         output_type: type[OutputT],
         max_tokens: int | None = None,
+        reasoning_effort: components.ChatRequestReasoningEffort | None = None,
     ) -> OutputT:
         schema = output_type.model_json_schema()
         self._strict_json_schema(schema)
@@ -85,15 +86,25 @@ class LLMClient:
         options = {}
         if max_tokens is not None:
             options["max_tokens"] = max_tokens
-        response = await self.client.chat.send_async(
-            model=model,
-            messages=messages,
-            provider=self._provider_preferences(),
-            response_format=response_format,
-            stream=False,
-            **options,
-        )
-        return output_type.model_validate_json(self._response_text(response))
+        if reasoning_effort is not None:
+            options["reasoning_effort"] = reasoning_effort
+        for attempt in range(2):
+            response = await self.client.chat.send_async(
+                model=model,
+                messages=messages,
+                provider=self._provider_preferences(),
+                response_format=response_format,
+                stream=False,
+                **options,
+            )
+            try:
+                response_text = self._response_text(response)
+            except TypeError:
+                if attempt == 0:
+                    continue
+                raise
+            return output_type.model_validate_json(response_text)
+        raise AssertionError("Structured response retry loop exited unexpectedly")
 
     async def classify_choices(
         self,
