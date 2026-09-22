@@ -5,8 +5,13 @@ import random
 from pydantic import ValidationError
 
 from classpect.models import ParadoxEngineOutput
-from classpect.utils import format_answer_string, quiz_to_model, generate_question_list
-from llm import generate_structured, generate_text
+from classpect.utils import (
+    format_answer_string,
+    generate_question_list,
+    quiz_to_classifier_questions,
+    quiz_to_model,
+)
+from llm import classify_choices, generate_structured, generate_text
 from prompt_library import (
     ASPECT_EXAMPLE,
     ASPECT_PROMPTS,
@@ -15,23 +20,49 @@ from prompt_library import (
     CLASS_EXAMPLE,
     CLASS_PROMPTS,
 )
-from settings import CLASSPECT_MODEL
+from settings import CLASSPECT_CLASSIFIER_MODEL, CLASSPECT_MODE, CLASSPECT_MODEL
 
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-async def answer_questions(
+def score_answers(quiz_json: list[dict], answer_indexes: list[int]) -> str:
+    if len(answer_indexes) != len(quiz_json):
+        raise ValueError("The number of quiz answers does not match the questions")
+
+    results = {
+        result
+        for question in quiz_json
+        for answer in question["answers"]
+        for result in answer["personality_types"]
+    }
+    result_scores = {result: 0 for result in results}
+
+    for question, answer_index in zip(quiz_json, answer_indexes):
+        try:
+            answer = question["answers"][answer_index]
+        except IndexError as exc:
+            raise ValueError("Quiz answer index is out of range") from exc
+        for result in answer["personality_types"]:
+            result_scores[result] += 1
+        logger.info(f"{question['question']}: {answer['answer']}")
+
+    logger.info(result_scores)
+    max_score = max(result_scores.values())
+    max_results = [res for res in result_scores if result_scores[res] == max_score]
+    logger.info(max_results)
+    return random.choice(max_results)
+
+
+async def answer_questions_with_llm(
     quiz_json: dict,
     character_description: str,
     example: str,
 ) -> str:
-    results = set()
     for question in quiz_json:
         for answer in question["answers"]:
             answer["answer"] = await format_answer_string(answer["answer"])
-            results.update(answer["personality_types"])
 
     quiz_model = await quiz_to_model(quiz_json)
     question_list = await generate_question_list(quiz_json)
@@ -61,23 +92,39 @@ async def answer_questions(
     ]
     logger.info(answers_in_order)
 
-    result_scores = {result: 0 for result in results}
-    for i, question in enumerate(quiz_json):
-        answer_list = question["answers"]
-        answers_by_text = {a["answer"]: a["personality_types"] for a in answer_list}
+    answer_indexes = []
+    for question, answer in zip(quiz_json, answers_in_order):
+        answers_by_text = {
+            item["answer"]: index for index, item in enumerate(question["answers"])
+        }
+        answer_indexes.append(answers_by_text[answer])
+    return score_answers(quiz_json, answer_indexes)
 
-        answer = answers_in_order[i]
-        personality_types = answers_by_text[answer]
-        for result in personality_types:
-            result_scores[result] += 1
-        logger.info(f"{question['question']}: {answer}")
 
-    logger.info(result_scores)
+async def answer_questions_with_classifier(
+    quiz_json: list[dict], character_description: str
+) -> str:
+    questions, answer_lookups = quiz_to_classifier_questions(quiz_json)
+    choices = await classify_choices(
+        model=CLASSPECT_CLASSIFIER_MODEL,
+        state={"personality": character_description},
+        questions=questions,
+    )
+    answer_indexes = [
+        answer_lookups[question_name][choices[question_name]]
+        for question_name in questions
+    ]
+    return score_answers(quiz_json, answer_indexes)
 
-    max_score = max(result_scores.values())
-    max_results = [res for res in result_scores if result_scores[res] == max_score]
-    logger.info(max_results)
-    return random.choice(max_results)
+
+async def answer_questions(
+    quiz_json: dict,
+    character_description: str,
+    example: str,
+) -> str:
+    if CLASSPECT_MODE == "classifier":
+        return await answer_questions_with_classifier(quiz_json, character_description)
+    return await answer_questions_with_llm(quiz_json, character_description, example)
 
 
 async def calculate_title(
