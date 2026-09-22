@@ -1,6 +1,7 @@
 import asyncio
 from types import SimpleNamespace
 
+import pytest
 from pydantic import BaseModel
 
 import llm
@@ -59,6 +60,103 @@ def test_generate_structured(monkeypatch):
     response_format = request["response_format"].model_dump()
     assert response_format["type"] == "json_schema"
     assert response_format["json_schema"]["strict"] is True
-    assert (
-        response_format["json_schema"]["schema"]["additionalProperties"] is False
+    assert response_format["json_schema"]["schema"]["additionalProperties"] is False
+
+
+def test_classify_choices(monkeypatch):
+    request = {}
+
+    async def create_async(**kwargs):
+        request.update(kwargs)
+        return SimpleNamespace(
+            answers={"question_1": SimpleNamespace(type="choice", choice="option_2")}
+        )
+
+    monkeypatch.setattr(llm.client.system_one, "create_async", create_async)
+    questions = {
+        "question_1": {
+            "type": "choice",
+            "instructions": "Pick one",
+            "criteria": {"option_1": "One", "option_2": "Two"},
+        }
+    }
+
+    result = asyncio.run(
+        llm.classify_choices(
+            model="jev-latest",
+            state={"personality": "A test personality"},
+            questions=questions,
+        )
     )
+
+    assert result == {"question_1": "option_2"}
+    assert request == {
+        "model": "jev-latest",
+        "state": {"personality": "A test personality"},
+        "questions": questions,
+    }
+
+
+def test_classify_choices_rejects_unknown_choice(monkeypatch):
+    async def create_async(**kwargs):
+        return SimpleNamespace(
+            answers={
+                "question_1": SimpleNamespace(type="choice", choice="not-an-option")
+            }
+        )
+
+    monkeypatch.setattr(llm.client.system_one, "create_async", create_async)
+
+    try:
+        asyncio.run(
+            llm.classify_choices(
+                model="jev-latest",
+                state="Test",
+                questions={
+                    "question_1": {
+                        "type": "choice",
+                        "instructions": "Pick one",
+                        "criteria": {"option_1": "One"},
+                    }
+                },
+            )
+        )
+    except ValueError as exc:
+        assert "unknown choice" in str(exc)
+    else:
+        raise AssertionError("Expected an unknown classifier choice to fail")
+
+
+@pytest.mark.parametrize(
+    ("answers", "error_type", "message"),
+    [
+        ({}, ValueError, "did not answer"),
+        (
+            {"question_1": SimpleNamespace(type="noul", noul=0.9)},
+            TypeError,
+            "non-choice",
+        ),
+    ],
+)
+def test_classify_choices_rejects_invalid_answers(
+    monkeypatch, answers, error_type, message
+):
+    async def create_async(**kwargs):
+        return SimpleNamespace(answers=answers)
+
+    monkeypatch.setattr(llm.client.system_one, "create_async", create_async)
+
+    with pytest.raises(error_type, match=message):
+        asyncio.run(
+            llm.classify_choices(
+                model="jev-latest",
+                state="Test",
+                questions={
+                    "question_1": {
+                        "type": "choice",
+                        "instructions": "Pick one",
+                        "criteria": {"option_1": "One"},
+                    }
+                },
+            )
+        )

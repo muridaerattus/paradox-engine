@@ -40,3 +40,32 @@ async def generate_question_list(quiz_json: dict):
     return "\n".join(
         [f"{i + 1}. {question['question']}" for i, question in enumerate(quiz_json)]
     )
+
+
+def quiz_to_classifier_questions(
+    quiz_json: list[dict],
+) -> tuple[dict[str, dict], dict[str, dict[str, int]]]:
+    """Build Jev choice questions and lookups back to quiz answer indexes."""
+    questions = {}
+    answer_indexes = {}
+
+    for question_index, question in enumerate(quiz_json, start=1):
+        question_name = f"question_{question_index}"
+        criteria = {}
+        answer_indexes[question_name] = {}
+
+        for answer_index, answer in enumerate(question["answers"]):
+            option_name = f"option_{answer_index + 1}"
+            criteria[option_name] = answer["answer"]
+            answer_indexes[question_name][option_name] = answer_index
+
+        questions[question_name] = {
+            "type": "choice",
+            "instructions": (
+                "Given the personality in the state, which response best fits them? "
+                f"Question: {question['question']}"
+            ),
+            "criteria": criteria,
+        }
+
+    return questions, answer_indexes
