@@ -4,7 +4,7 @@ from types import SimpleNamespace
 import pytest
 from pydantic import BaseModel
 
-import llm
+from paradox_engine.llm import LLMClient
 
 
 class ExampleOutput(BaseModel):
@@ -17,6 +17,7 @@ def _response(content: str):
 
 
 def test_generate_text(monkeypatch):
+    llm = LLMClient(None)
     request = {}
 
     async def send_async(**kwargs):
@@ -41,6 +42,7 @@ def test_generate_text(monkeypatch):
 
 
 def test_generate_text_forwards_reasoning_effort(monkeypatch):
+    llm = LLMClient(None)
     request = {}
 
     async def send_async(**kwargs):
@@ -61,6 +63,7 @@ def test_generate_text_forwards_reasoning_effort(monkeypatch):
 
 
 def test_generate_structured(monkeypatch):
+    llm = LLMClient(None)
     request = {}
 
     async def send_async(**kwargs):
@@ -88,6 +91,7 @@ def test_generate_structured(monkeypatch):
 
 
 def test_classify_choices(monkeypatch):
+    llm = LLMClient(None)
     request = {}
 
     async def create_async(**kwargs):
@@ -122,6 +126,7 @@ def test_classify_choices(monkeypatch):
 
 
 def test_classify_choices_rejects_unknown_choice(monkeypatch):
+    llm = LLMClient(None)
     async def create_async(**kwargs):
         return SimpleNamespace(
             answers={
@@ -165,6 +170,7 @@ def test_classify_choices_rejects_unknown_choice(monkeypatch):
 def test_classify_choices_rejects_invalid_answers(
     monkeypatch, answers, error_type, message
 ):
+    llm = LLMClient(None)
     async def create_async(**kwargs):
         return SimpleNamespace(answers=answers)
 

@@ -1,4 +1,4 @@
-from alchemy.models import AlchemyCode, AlchemyCodeBinary
+from paradox_engine.alchemy.models import AlchemyCode, AlchemyCodeBinary
 
 
 def code_to_binary_int(char: str) -> int:

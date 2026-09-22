@@ -1,4 +1,4 @@
-from fraymotifs.models import Title
+from paradox_engine.fraymotifs.models import Title
 
 
 def split_titles(title_list: str) -> tuple[list[str], list[str]]:

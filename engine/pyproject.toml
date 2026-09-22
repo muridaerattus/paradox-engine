@@ -7,12 +7,13 @@ requires-python = ">=3.12"
 dependencies = [
     "aiosqlite>=0.21.0",
     "alembic>=1.16.4",
-    "dotenv>=0.9.9",
     "fastapi>=0.116.1",
     "openrouter>=1.2.15",
     "pydantic>=2.11.7",
+    "pydantic-settings>=2.10.1",
+    "python-dotenv>=1.1.1",
     "sqlalchemy>=2.0.41",
-    "sqlmodel[asyncio]>=0.0.24",
+    "sqlmodel>=0.0.24",
     "uvicorn>=0.51.0",
 ]
 
@@ -23,4 +24,15 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-pythonpath = ["."]
+pythonpath = ["src"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/paradox_engine"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88

@@ -1,0 +1,1 @@
+"""Fraymotif domain."""
