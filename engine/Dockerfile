@@ -13,7 +13,7 @@ FROM python:3.12-slim AS runtime
 WORKDIR /app
 
 ENV PATH="/app/.venv/bin:$PATH" \
-    PYTHONPATH=/app \
+    PYTHONPATH=/app/src \
     PYTHONUNBUFFERED=1 \
     DATABASE_URL=sqlite+aiosqlite:////data/paradox.db \
     CLASS_QUIZ_FILENAME=/app/class_quiz.json \

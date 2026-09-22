@@ -1,11 +1,11 @@
-from alchemy.models import Item, format_name
+from paradox_engine.alchemy.models import Item, format_name
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select
-from settings import DATABASE_URL
+from paradox_engine.config import get_settings
 
 
-engine = create_async_engine(DATABASE_URL, echo=True)
+engine = create_async_engine(get_settings().database_url, echo=True)
 session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 

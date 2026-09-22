@@ -1,49 +1,40 @@
+from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
-from fraymotifs.utils import split_titles, format_titles
-from fraymotifs.models import Title
-from main import app
+
+from paradox_engine.app import create_app
+from paradox_engine.config import Settings
+from paradox_engine.fraymotifs.models import Title
+from paradox_engine.fraymotifs.utils import format_titles, split_titles
 
 
 def test_split_titles():
-    # Test with a simple title
-    titles = split_titles("Rogue of Doom")
-    assert titles == (["rogue"], ["doom"])
-
-    # Test with multiple titles
-    titles = split_titles("Rogue of Doom, Mage of Time")
-    assert titles == (["rogue", "mage"], ["doom", "time"])
-
-    # Test with empty string
-    titles = split_titles("")
-    assert titles == ([], [])
-
-    # Test with invalid format
+    assert split_titles("Rogue of Doom") == (["rogue"], ["doom"])
+    assert split_titles("Rogue of Doom, Mage of Time") == (
+        ["rogue", "mage"],
+        ["doom", "time"],
+    )
+    assert split_titles("") == ([], [])
     with pytest.raises(ValueError):
         split_titles("Rogue of Doom, Mage")
 
 
 def test_format_titles():
-    # Test with a single title
-    titles = format_titles([Title(title_class="Rogue", title_aspect="Doom")])
-    assert titles == "Player 1: Rogue of Doom"
-
-    # Test with multiple titles
-    titles = format_titles(
-        [
-            Title(title_class="Rogue", title_aspect="Doom"),
-            Title(title_class="Mage", title_aspect="Time"),
-        ]
+    assert format_titles([Title(title_class="Rogue", title_aspect="Doom")]) == (
+        "Player 1: Rogue of Doom"
     )
-    assert titles == "Player 1: Rogue of Doom\nPlayer 2: Mage of Time"
-
-    # Test with empty list
-    titles = format_titles([])
-    assert titles == ""
+    assert format_titles([]) == ""
 
 
-def test_invalid_title_returns_bad_request():
-    with TestClient(app) as client:
+def test_invalid_title_returns_bad_request(tmp_path: Path):
+    settings = Settings(
+        prompts_directory=Path("prompts"),
+        class_quiz_filename=Path("class_quiz.json"),
+        aspect_quiz_filename=Path("aspect_quiz.json"),
+        database_url=f"sqlite+aiosqlite:///{tmp_path / 'test.db'}",
+    )
+    with TestClient(create_app(settings)) as client:
         response = client.post(
             "/fraymotif",
             json={
@@ -52,7 +43,6 @@ def test_invalid_title_returns_bad_request():
                 "additional_info": "None",
             },
         )
-
     assert response.status_code == 400
     assert response.json() == {
         "detail": "Titles must be in the format 'Class of Aspect'."

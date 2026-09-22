@@ -6,16 +6,18 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
-from settings import DATABASE_URL
+from paradox_engine.config import get_settings
 
 # Models have to be imported for Alembic to recognize them.
-from alchemy.models import Item  # noqa: F401
+from paradox_engine.alchemy.models import Item  # noqa: F401
 from sqlmodel import SQLModel
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-config.set_main_option("sqlalchemy.url", DATABASE_URL.replace("%", "%%"))
+config.set_main_option(
+    "sqlalchemy.url", get_settings().database_url.replace("%", "%%")
+)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

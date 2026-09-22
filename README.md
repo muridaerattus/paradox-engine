@@ -93,16 +93,18 @@ I manage dependencies with `uv`, because it's fast. Before all this, use `pip in
     source .venv/bin/activate
     uv sync
     ```
-2. Update the database. Replace `sqlalchemy.url` in `alembic.ini.example` with the name of your database connection. Try `sqlite+aiosqlite:///./paradox.db`. Then run:
+2. Set up `.env` by copying `.env.example` and filling in the required values. `DATABASE_URL` defaults to `sqlite+aiosqlite:///./paradox.db`.
     ```bash
-    cp alembic.ini.example cp alembic.ini
-    uv run alembic upgrade head
-    uv run -m scripts.preload_objects
+    cp .env.example .env
     ```
-3. Set up your `.env` by copying over the `.env.example`.
+3. Apply migrations and preload the standard objects:
+    ```bash
+    uv run alembic -c alembic.ini.example upgrade head
+    uv run python -m scripts.preload_objects
+    ```
 4. Start the FastAPI server in the background:
     ```bash
-    nohup uvicorn main:app --reload > log.txt & disown -h
+    nohup uv run uvicorn paradox_engine.app:app --reload > log.txt & disown -h
     ```
    By default, the API will be available at http://localhost:8000
 

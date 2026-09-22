@@ -1,4 +1,4 @@
-from alchemy.operations import alchemy_and, alchemy_or
+from paradox_engine.alchemy.operations import alchemy_and, alchemy_or
 
 
 def test_alchemy_and():
