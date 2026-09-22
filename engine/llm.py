@@ -97,3 +97,37 @@ async def generate_structured(
             stream=False,
         )
     return output_type.model_validate_json(_response_text(response))
+
+
+async def classify_choices(
+    *,
+    model: str,
+    state: str | dict | list,
+    questions: dict[str, dict],
+) -> dict[str, str]:
+    """Use an OpenRouter System One model to answer choice questions."""
+    response = await client.system_one.create_async(
+        model=model,
+        state=state,
+        questions=questions,
+    )
+
+    choices = {}
+    for question_name, question in questions.items():
+        answer = response.answers.get(question_name)
+        if answer is None:
+            raise ValueError(f"Classifier did not answer {question_name}")
+        if getattr(answer, "type", None) != "choice":
+            raise TypeError(
+                f"Classifier returned a non-choice answer for {question_name}"
+            )
+
+        choice = getattr(answer, "choice", None)
+        criteria = question.get("criteria", {})
+        if choice not in criteria:
+            raise ValueError(
+                f"Classifier returned unknown choice {choice!r} for {question_name}"
+            )
+        choices[question_name] = choice
+
+    return choices

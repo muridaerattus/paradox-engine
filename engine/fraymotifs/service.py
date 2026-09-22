@@ -3,7 +3,7 @@ from fraymotifs.utils import format_titles
 from llm import generate_structured
 
 from prompt_library import ASPECT_PROMPTS, build_fraymotif_messages
-from settings import CLASSPECT_MODEL
+from settings import FRAYMOTIF_MODEL
 
 
 async def generate_aspect_context(titles: list[Title]) -> str:
@@ -38,7 +38,7 @@ async def create_fraymotif(
     aspect_context = await generate_aspect_context(titles)
     players_formatted = format_titles(titles)
     fraymotif = await generate_structured(
-        model=CLASSPECT_MODEL,
+        model=FRAYMOTIF_MODEL,
         messages=build_fraymotif_messages(
             players=players_formatted,
             memory=memory,
