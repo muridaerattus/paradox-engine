@@ -133,6 +133,8 @@ def test_interview_prompt_uses_paradox_engine_persona_without_final_only_task():
     assert "You do not decide whether the interview is complete" in system_prompt
     assert "There is no follow-up to this response" not in system_prompt
     assert "{coverage_instruction}" not in system_prompt
+    assert "1 quiz item(s)" in system_prompt
+    assert 'Never call a question "final," "last,"' in system_prompt
     assert messages[-1] == {"role": "user", "content": "I take risks."}
 
 
@@ -167,6 +169,7 @@ def test_active_interview_appends_in_character_follow_up():
         "expected_version": 0,
         "user_message": "My friends.",
         "assistant_message": "What do you protect when the cost becomes severe?",
+        "classifier_answers": {"aspect_question_1": "option_1"},
     }
     assert llm.request["messages"][-1]["content"] == "My friends."
     assert "I direct my own path." in llm.request["messages"][0]["content"]
@@ -182,6 +185,7 @@ def test_active_interview_appends_in_character_follow_up():
 
 def test_ready_interview_runs_existing_classpect_pipeline():
     state = _state()
+    state.classifier_answers = {"aspect_question_1": "option_1"}
     decision = ClasspectInterviewDecision(
         response="",
         personality_summary="Protective, analytical, and motivated by discovery.",
@@ -189,13 +193,15 @@ def test_ready_interview_runs_existing_classpect_pipeline():
     service, repo, _, classpect = _service(
         state,
         decision,
-        {"class_question_1": "option_1", "aspect_question_1": "option_1"},
+        {"class_question_1": "option_1"},
     )
 
     asyncio.run(service.continue_thread(state.thread.id, "I seek hidden patterns."))
 
     assert classpect.personality == decision.personality_summary
     assert classpect.answer_indexes == ([0], [0])
+    assert set(service.llm.classifier_request["questions"]) == {"class_question_1"}
+    assert repo.exchange["classifier_answers"] == {"class_question_1": "option_1"}
     assert repo.exchange["result"].class_result == "Seer"
     assert repo.exchange["assistant_message"] == "Your title is the Seer of Light."
 
@@ -216,6 +222,7 @@ def test_repository_persists_and_completes_thread(tmp_path, monkeypatch):
             expected_version=0,
             user_message="I persist.",
             assistant_message="You are the Heir of Time.",
+            classifier_answers={"class_question_1": "option_2"},
             result=ParadoxEngineOutput(
                 class_result="Heir",
                 aspect_result="Time",
@@ -236,6 +243,7 @@ def test_repository_persists_and_completes_thread(tmp_path, monkeypatch):
         "assistant",
     ]
     assert reloaded.thread.class_result == "Heir"
+    assert reloaded.classifier_answers == {"class_question_1": "option_2"}
 
 
 def test_thread_endpoints_return_full_state_and_validate_messages():

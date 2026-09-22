@@ -6,6 +6,7 @@ from sqlmodel import select
 from paradox_engine.alchemy.repository import session_maker
 from paradox_engine.classpect.models import (
     ClasspectThread,
+    ClasspectThreadAnswer,
     ClasspectThreadMessage,
     ClasspectThreadState,
     ParadoxEngineOutput,
@@ -43,7 +44,18 @@ async def get_thread(thread_id: str) -> ClasspectThreadState | None:
             .where(ClasspectThreadMessage.thread_id == thread_id)
             .order_by(ClasspectThreadMessage.id)
         )
-        return ClasspectThreadState(thread=thread, messages=list(result.all()))
+        answer_result = await session.exec(
+            select(ClasspectThreadAnswer).where(
+                ClasspectThreadAnswer.thread_id == thread_id
+            )
+        )
+        return ClasspectThreadState(
+            thread=thread,
+            messages=list(result.all()),
+            classifier_answers={
+                answer.question_key: answer.choice for answer in answer_result.all()
+            },
+        )
 
 
 async def append_exchange(
@@ -52,6 +64,7 @@ async def append_exchange(
     expected_version: int,
     user_message: str,
     assistant_message: str,
+    classifier_answers: dict[str, str],
     result: ParadoxEngineOutput | None = None,
 ) -> ClasspectThreadState:
     values: dict = {
@@ -85,6 +98,14 @@ async def append_exchange(
             ClasspectThreadMessage(
                 thread_id=thread_id, role="user", content=user_message
             )
+        )
+        session.add_all(
+            ClasspectThreadAnswer(
+                thread_id=thread_id,
+                question_key=question_key,
+                choice=choice,
+            )
+            for question_key, choice in classifier_answers.items()
         )
         session.add(
             ClasspectThreadMessage(

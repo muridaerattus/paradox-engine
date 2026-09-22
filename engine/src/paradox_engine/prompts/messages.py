@@ -27,9 +27,12 @@ def classpect_interview_messages(
     persona = prompts.paradox_engine.split("<TASK>", maxsplit=1)[0]
     if unresolved_questions:
         coverage_instruction = (
-            "The classifier still lacks sufficient evidence for these quiz items:\n- "
+            f"The classifier still lacks sufficient evidence for "
+            f"{len(unresolved_questions)} quiz item(s). All currently unresolved "
+            "items are listed below:\n- "
             + "\n- ".join(unresolved_questions)
-            + "\nAsk one question that will best resolve this missing evidence."
+            + "\nConsider every listed item together, then ask exactly one question "
+            "that will resolve as many of them as possible."
         )
     else:
         coverage_instruction = (

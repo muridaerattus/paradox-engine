@@ -50,6 +50,18 @@ class ClasspectThreadMessage(SQLModel, table=True):
     created_at: datetime = SQLField(default_factory=lambda: datetime.now(timezone.utc))
 
 
+class ClasspectThreadAnswer(SQLModel, table=True):
+    __tablename__ = "classpect_thread_answer"
+
+    thread_id: str = SQLField(
+        foreign_key="classpect_thread.id", primary_key=True, index=True
+    )
+    question_key: str = SQLField(primary_key=True)
+    choice: str
+    created_at: datetime = SQLField(default_factory=lambda: datetime.now(timezone.utc))
+
+
 class ClasspectThreadState(BaseModel):
     thread: ClasspectThread
     messages: list[ClasspectThreadMessage]
+    classifier_answers: dict[str, str] = Field(default_factory=dict)

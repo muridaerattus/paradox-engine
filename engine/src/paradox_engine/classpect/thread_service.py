@@ -94,13 +94,31 @@ class ClasspectThreadService:
         questions, answer_lookups, labels = _coverage_questions(
             self.class_quiz, self.aspect_quiz
         )
-        choices = await self.llm.classify_choices(
-            model=self.settings.classpect_classifier_model,
-            state={"conversation": history},
-            questions=questions,
-        )
+        stored_answers = {
+            name: choice
+            for name, choice in state.classifier_answers.items()
+            if name in answer_lookups and choice in answer_lookups[name]
+        }
+        pending_questions = {
+            name: question
+            for name, question in questions.items()
+            if name not in stored_answers
+        }
+        choices = {}
+        if pending_questions:
+            choices = await self.llm.classify_choices(
+                model=self.settings.classpect_classifier_model,
+                state={"conversation": history},
+                questions=pending_questions,
+            )
+        newly_resolved_answers = {
+            name: choice
+            for name, choice in choices.items()
+            if choice != INSUFFICIENT_EVIDENCE
+        }
+        resolved_answers = stored_answers | newly_resolved_answers
         unresolved_questions = [
-            labels[name] for name in questions if choices[name] == INSUFFICIENT_EVIDENCE
+            labels[name] for name in questions if name not in resolved_answers
         ]
         decision = await self.llm.generate_structured(
             model=self.settings.classpect_model,
@@ -122,17 +140,18 @@ class ClasspectThreadService:
                 expected_version=state.thread.version,
                 user_message=user_message,
                 assistant_message=decision.response,
+                classifier_answers=newly_resolved_answers,
             )
 
         if not decision.personality_summary.strip():
             raise ValueError("The interviewer returned an empty personality summary")
         class_answer_indexes = [
-            answer_lookups[name][choices[name]]
+            answer_lookups[name][resolved_answers[name]]
             for name in questions
             if name.startswith("class_")
         ]
         aspect_answer_indexes = [
-            answer_lookups[name][choices[name]]
+            answer_lookups[name][resolved_answers[name]]
             for name in questions
             if name.startswith("aspect_")
         ]
@@ -148,5 +167,6 @@ class ClasspectThreadService:
             expected_version=state.thread.version,
             user_message=user_message,
             assistant_message=result.llm_response,
+            classifier_answers=newly_resolved_answers,
             result=result,
         )

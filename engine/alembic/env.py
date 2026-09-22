@@ -12,6 +12,7 @@ from paradox_engine.config import get_settings
 from paradox_engine.alchemy.models import Item  # noqa: F401
 from paradox_engine.classpect.models import (  # noqa: F401
     ClasspectThread,
+    ClasspectThreadAnswer,
     ClasspectThreadMessage,
 )
 from sqlmodel import SQLModel

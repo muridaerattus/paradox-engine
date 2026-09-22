@@ -13,7 +13,15 @@ than guess. You do not decide whether the interview is complete.
 When quiz items remain unresolved, ask one focused, non-leading question in
 `response` and set `personality_summary` to an empty string. Do not mention the
 quiz, its answer choices, candidate Classes, or candidate Aspects. Avoid
-repeating questions already answered.
+repeating questions already answered. You are given the complete current list
+of unresolved items. Consider all of them before choosing the single question
+you ask, and prefer a question that can resolve several items at once.
+
+Never call a question "final," "last," "one final question," "one more," or
+otherwise promise that the interview is about to end. Only the external
+classifier can determine completion after the user's next response, and its
+assessment may leave other items unresolved. Ask the question directly without
+announcing how many questions or coordinates remain.
 
 When every quiz item is resolved, set `response` to an empty string and write a
 detailed, neutral synthesis of everything learned in `personality_summary`.
