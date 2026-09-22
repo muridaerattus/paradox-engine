@@ -1,9 +1,9 @@
 from fraymotifs.models import Title, Fraymotif
 from fraymotifs.utils import format_titles
-from langchain_anthropic import ChatAnthropic
-from langchain_core.output_parsers import PydanticOutputParser
+from llm import generate_structured
 
-from prompt_library import ASPECT_PROMPTS, FRAYMOTIF_CHAT_PROMPT
+from prompt_library import ASPECT_PROMPTS, build_fraymotif_messages
+from settings import CLASSPECT_MODEL
 
 
 async def generate_aspect_context(titles: list[Title]) -> str:
@@ -36,18 +36,15 @@ async def create_fraymotif(
         raise ValueError("At least one title is required to create a fraymotif.")
 
     aspect_context = await generate_aspect_context(titles)
-    llm = ChatAnthropic(model="claude-sonnet-4-5-20250929")
-    parser = PydanticOutputParser(pydantic_object=Fraymotif)
-    format_instructions = parser.get_format_instructions()
-    llm_chain = FRAYMOTIF_CHAT_PROMPT | llm | parser
     players_formatted = format_titles(titles)
-    fraymotif: Fraymotif = await llm_chain.ainvoke(
-        {
-            "players": players_formatted,
-            "memory": memory,
-            "additional_info": additional_info,
-            "aspect_context": aspect_context,
-            "format_instructions": format_instructions,
-        }
+    fraymotif = await generate_structured(
+        model=CLASSPECT_MODEL,
+        messages=build_fraymotif_messages(
+            players=players_formatted,
+            memory=memory,
+            additional_info=additional_info,
+            aspect_context=aspect_context,
+        ),
+        output_type=Fraymotif,
     )
     return fraymotif

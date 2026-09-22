@@ -1,6 +1,8 @@
 import pytest
+from fastapi.testclient import TestClient
 from fraymotifs.utils import split_titles, format_titles
 from fraymotifs.models import Title
+from main import app
 
 
 def test_split_titles():
@@ -38,3 +40,20 @@ def test_format_titles():
     # Test with empty list
     titles = format_titles([])
     assert titles == ""
+
+
+def test_invalid_title_returns_bad_request():
+    with TestClient(app) as client:
+        response = client.post(
+            "/fraymotif",
+            json={
+                "players": "Not a title",
+                "memory": "A memory",
+                "additional_info": "None",
+            },
+        )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": "Titles must be in the format 'Class of Aspect'."
+    }

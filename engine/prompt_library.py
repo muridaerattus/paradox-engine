@@ -3,10 +3,20 @@ Centralized loader for all prompt markdown files.
 """
 
 import os
+from typing import Literal, TypeAlias
 
-from langchain_core.prompts import ChatPromptTemplate
+from openrouter.components import (
+    ChatSystemMessageTypedDict,
+    ChatUserMessageTypedDict,
+)
 
 from settings import PROMPTS_DIRECTORY
+
+ChatMessage: TypeAlias = ChatSystemMessageTypedDict | ChatUserMessageTypedDict
+
+STRUCTURED_OUTPUT_INSTRUCTION = (
+    "Return a JSON object that matches the response schema supplied with the request."
+)
 
 
 def _read_text(path: str) -> str:
@@ -38,30 +48,45 @@ CLASS_EXAMPLE: str = _read_text(f"{PROMPTS_DIRECTORY}/class_example.md")
 ASPECT_EXAMPLE: str = _read_text(f"{PROMPTS_DIRECTORY}/aspect_example.md")
 PARADOX_ENGINE_PROMPT: str = _read_text(f"{PROMPTS_DIRECTORY}/paradox_engine.md")
 
-QUIZ_ANSWERER_CHAT_PROMPT = ChatPromptTemplate(
-    [
-        ("system", QUIZ_ANSWERER_PROMPT_TEXT),
-        ("user", "QUESTIONS:\n{questions}"),
+def build_quiz_answerer_messages(
+    *, character_description: str, questions: str, example: str
+) -> list[ChatMessage]:
+    return [
+        {
+            "role": "system",
+            "content": QUIZ_ANSWERER_PROMPT_TEXT.format(
+                character_description=character_description,
+                example=example,
+                format_instructions=STRUCTURED_OUTPUT_INSTRUCTION,
+            ),
+        },
+        {"role": "user", "content": f"QUESTIONS:\n{questions}"},
     ]
-)
 
 FRAYMOTIF_GENERATOR_PROMPT: str = _read_text(
     f"{PROMPTS_DIRECTORY}/fraymotifs/fraymotif_generator.md"
 )
 
-FRAYMOTIF_CHAT_PROMPT = ChatPromptTemplate(
-    [
-        ("system", FRAYMOTIF_GENERATOR_PROMPT),
-        (
-            "user",
-            """
-         Player Titles: {players}
-         Memory: {memory}
-         Additional Info: {additional_info}
-         Context for each aspect: {aspect_context}""",
-        ),
+def build_fraymotif_messages(
+    *, players: str, memory: str, additional_info: str, aspect_context: str
+) -> list[ChatMessage]:
+    return [
+        {
+            "role": "system",
+            "content": FRAYMOTIF_GENERATOR_PROMPT.format(
+                format_instructions=STRUCTURED_OUTPUT_INSTRUCTION
+            ),
+        },
+        {
+            "role": "user",
+            "content": (
+                f"Player Titles: {players}\n"
+                f"Memory: {memory}\n"
+                f"Additional Info: {additional_info}\n"
+                f"Context for each aspect: {aspect_context}\n"
+            ),
+        },
     ]
-)
 
 
 ITEM_GENERATOR_PROMPT: str = _read_text(
@@ -74,29 +99,66 @@ ITEM_TAGLINE_GENERATOR_PROMPT: str = _read_text(
     f"{PROMPTS_DIRECTORY}/alchemy/item_tagline_generator.md"
 )
 
-ITEM_GENERATOR_CHAT_PROMPT = ChatPromptTemplate(
-    [
-        ("system", ITEM_GENERATOR_PROMPT),
-        (
-            "user",
-            """
-         Item 1: {item_1_name}
-         Item 1 Components: {item_1_components}
-         Item 1 Description: {item_1_description}
-         
-         Item 2: {item_2_name}
-         Item 2 Components: {item_2_components}
-         Item 2 Description: {item_2_description}
-         Operation: {operation}""",
-        ),
+def item_generator_messages(
+    *,
+    item_1_name: str,
+    item_1_components: str,
+    item_1_description: str,
+    item_2_name: str,
+    item_2_components: str,
+    item_2_description: str,
+    operation: Literal["and", "or"],
+) -> list[ChatMessage]:
+    return [
+        {
+            "role": "system",
+            "content": ITEM_GENERATOR_PROMPT.format(
+                format_instructions=STRUCTURED_OUTPUT_INSTRUCTION
+            ),
+        },
+        {
+            "role": "user",
+            "content": (
+                f"Item 1: {item_1_name}\n"
+                f"Item 1 Components: {item_1_components}\n"
+                f"Item 1 Description: {item_1_description}\n\n"
+                f"Item 2: {item_2_name}\n"
+                f"Item 2 Components: {item_2_components}\n"
+                f"Item 2 Description: {item_2_description}\n"
+                f"Operation: {operation}"
+            ),
+        },
     ]
-)
-ITEM_DESCRIPTION_CHAT_PROMPT = ChatPromptTemplate(
-    [("system", ITEM_DESCRIPTION_GENERATOR_PROMPT), ("user", "{name}")]
-)
-ITEM_TAGLINE_CHAT_PROMPT = ChatPromptTemplate(
-    [
-        ("system", ITEM_TAGLINE_GENERATOR_PROMPT),
-        ("user", "{name}\n{description}"),
+
+def build_item_description_messages(*, name: str) -> list[ChatMessage]:
+    return [
+        {"role": "system", "content": ITEM_DESCRIPTION_GENERATOR_PROMPT},
+        {"role": "user", "content": name},
     ]
-)
+
+
+def build_item_tagline_messages(*, name: str, description: str) -> list[ChatMessage]:
+    return [
+        {"role": "system", "content": ITEM_TAGLINE_GENERATOR_PROMPT},
+        {"role": "user", "content": f"{name}\n{description}"},
+    ]
+
+
+def build_paradox_engine_messages(
+    *,
+    character_description: str,
+    class_data: str,
+    aspect_data: str,
+    title: str,
+) -> list[ChatMessage]:
+    return [
+        {
+            "role": "system",
+            "content": PARADOX_ENGINE_PROMPT.format(
+                character_description=character_description,
+                class_data=class_data,
+                aspect_data=aspect_data,
+            ),
+        },
+        {"role": "user", "content": title},
+    ]
