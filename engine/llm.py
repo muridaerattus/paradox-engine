@@ -42,20 +42,20 @@ async def generate_text(
     model: str,
     messages: list[ChatMessage],
     max_tokens: int | None = None,
+    reasoning_effort: components.ChatRequestReasoningEffort | None = None,
 ) -> str:
-    if max_tokens is None:
-        response = await client.chat.send_async(
-            model=model,
-            messages=messages,
-            stream=False,
-        )
-    else:
-        response = await client.chat.send_async(
-            model=model,
-            messages=messages,
-            max_tokens=max_tokens,
-            stream=False,
-        )
+    options = {}
+    if max_tokens is not None:
+        options["max_tokens"] = max_tokens
+    if reasoning_effort is not None:
+        options["reasoning_effort"] = reasoning_effort
+
+    response = await client.chat.send_async(
+        model=model,
+        messages=messages,
+        stream=False,
+        **options,
+    )
     return _response_text(response)
 
 

@@ -162,6 +162,7 @@ async def calculate_title(
             title=title,
         ),
         max_tokens=8192,
+        reasoning_effort="minimal",
     )
 
     return ParadoxEngineOutput(

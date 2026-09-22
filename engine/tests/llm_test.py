@@ -35,6 +35,27 @@ def test_generate_text(monkeypatch):
     assert result == "hello"
     assert request["model"] == "test/model"
     assert "response_format" not in request
+    assert "reasoning_effort" not in request
+
+
+def test_generate_text_forwards_reasoning_effort(monkeypatch):
+    request = {}
+
+    async def send_async(**kwargs):
+        request.update(kwargs)
+        return _response("hello")
+
+    monkeypatch.setattr(llm.client.chat, "send_async", send_async)
+
+    asyncio.run(
+        llm.generate_text(
+            model="z-ai/glm-5.3-flash",
+            messages=[{"role": "user", "content": "Say hello"}],
+            reasoning_effort="minimal",
+        )
+    )
+
+    assert request["reasoning_effort"] == "minimal"
 
 
 def test_generate_structured(monkeypatch):
