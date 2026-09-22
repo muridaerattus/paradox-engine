@@ -12,6 +12,13 @@ OutputT = TypeVar("OutputT", bound=BaseModel)
 client = OpenRouter(api_key=OPENROUTER_API_KEY)
 
 
+def _provider_preferences() -> components.ProviderPreferences:
+    return components.ProviderPreferences(
+        require_parameters=True,
+        sort="throughput",
+    )
+
+
 def _response_text(response: components.ChatResult) -> str:
     if not response.choices:
         raise ValueError("OpenRouter returned no choices")
@@ -53,6 +60,7 @@ async def generate_text(
     response = await client.chat.send_async(
         model=model,
         messages=messages,
+        provider=_provider_preferences(),
         stream=False,
         **options,
     )
@@ -69,7 +77,6 @@ async def generate_structured(
     schema = output_type.model_json_schema()
     _strict_json_schema(schema)
 
-    provider = components.ProviderPreferences(require_parameters=True)
     response_format = components.ChatFormatJSONSchemaConfig(
         type="json_schema",
         json_schema=components.ChatJSONSchemaConfig(
@@ -83,7 +90,7 @@ async def generate_structured(
         response = await client.chat.send_async(
             model=model,
             messages=messages,
-            provider=provider,
+            provider=_provider_preferences(),
             response_format=response_format,
             stream=False,
         )
@@ -91,7 +98,7 @@ async def generate_structured(
         response = await client.chat.send_async(
             model=model,
             messages=messages,
-            provider=provider,
+            provider=_provider_preferences(),
             response_format=response_format,
             max_tokens=max_tokens,
             stream=False,

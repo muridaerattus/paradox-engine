@@ -36,6 +36,8 @@ def test_generate_text(monkeypatch):
     assert request["model"] == "test/model"
     assert "response_format" not in request
     assert "reasoning_effort" not in request
+    assert request["provider"].sort == "throughput"
+    assert request["provider"].require_parameters is True
 
 
 def test_generate_text_forwards_reasoning_effort(monkeypatch):
@@ -77,6 +79,7 @@ def test_generate_structured(monkeypatch):
 
     assert result == ExampleOutput(answer="structured")
     assert request["provider"].require_parameters is True
+    assert request["provider"].sort == "throughput"
 
     response_format = request["response_format"].model_dump()
     assert response_format["type"] == "json_schema"
