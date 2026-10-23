@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 class MyClient(discord.Client):
     def __init__(self, *, intents: discord.Intents):
-        super().__init__(intents=intents)
+        super().__init__(intents=intents, allowed_mentions=discord.AllowedMentions.none())
         self.tree = app_commands.CommandTree(self)
 
     async def setup_hook(self):
@@ -179,30 +179,29 @@ async def fraymotif(
             for chunk in split_message(output, max_length=1994):
                 await interaction.followup.send(f"```{chunk}```")
         except httpx.ReadTimeout:
-            logger.error(
-                f"ReadTimeout during fraymotif | players='{players}', memory='{memory}', additional_info='{additional_info}'"
-            )
+            logger.error("ReadTimeout during fraymotif")
             await interaction.followup.send(
                 "```[ERROR] Skaian link timed out. Please try again later.```"
             )
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 400:
                 logger.warning(
-                    f"Fraymotif command received invalid titles: players='{players}', memory='{memory}', additional_info='{additional_info}'. Error: {e}"
+                    "Fraymotif command received invalid titles"
                 )
                 await interaction.followup.send(
                     '```[ERROR] Valid titles not detected. Please use the form "Class of Aspect, Class of Aspect".```'
                 )
             else:
                 logger.error(
-                    f"HTTP error during fraymotif: {e} (status code: {e.response.status_code}) | players='{players}', memory='{memory}', additional_info='{additional_info}'"
+                    "HTTP error during fraymotif (status code: %s)",
+                    e.response.status_code,
                 )
                 await interaction.followup.send(
                     "```[ERROR] Skaian link rendered uninterpretable. Please try again later.```"
                 )
-        except Exception as e:
+        except Exception:
             logger.error(
-                f"Unexpected error during fraymotif: {e} | players='{players}', memory='{memory}', additional_info='{additional_info}'",
+                "Unexpected error during fraymotif",
                 exc_info=True,
             )
             await interaction.followup.send(
@@ -210,4 +209,5 @@ async def fraymotif(
             )
 
 
-client.run(DISCORD_BOT_TOKEN)
+if __name__ == "__main__":
+    client.run(DISCORD_BOT_TOKEN)

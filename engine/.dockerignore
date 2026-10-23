@@ -8,9 +8,13 @@ __pycache__/
 *.db
 .env
 .env.*
+.docker.env
+.docker.env.*
 *.sqlite3
 *.sqlite
 *.log
+log.txt
+*.db-*
 .idea/
 .vscode/
 .git/

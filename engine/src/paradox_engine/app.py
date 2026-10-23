@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 
 from paradox_engine.alchemy import repository
 from paradox_engine.alchemy.service import AlchemyService
+from paradox_engine.api.body_limit import RequestBodyLimitMiddleware
 from paradox_engine.api.routers import alchemy, classpect, fraymotifs, health
 from paradox_engine.api.rate_limit import IPRateLimiter
 from paradox_engine.classpect.service import ClasspectService
@@ -84,6 +85,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         redoc_url="/redoc" if settings.enable_docs else None,
     )
     app.state.rate_limiter = IPRateLimiter()
+    app.add_middleware(
+        RequestBodyLimitMiddleware, max_bytes=settings.max_request_body_bytes
+    )
     if settings.parsed_cors_origins:
         app.add_middleware(
             CORSMiddleware,

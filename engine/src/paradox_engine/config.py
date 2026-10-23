@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     classpect_classifier_model: str = "jev-latest"
     classpect_model: str = "z-ai/glm-5.3-flash"
     fraymotif_model: str = "z-ai/glm-5.3"
+    log_llm_outputs: bool = Field(
+        default=True,
+        description="Log classpect reasoning, quiz answers, scores, and final titles.",
+    )
 
     class_quiz_filename: Path = Path("class_quiz.json")
     aspect_quiz_filename: Path = Path("aspect_quiz.json")
@@ -34,6 +38,7 @@ class Settings(BaseSettings):
 
     api_root_path: str = "/api"
     enable_docs: bool = False
+    max_request_body_bytes: int = Field(default=131_072, gt=0)
     cors_origins: str = Field(
         default="http://localhost:3000",
         description="Comma-separated browser origins allowed by CORS.",

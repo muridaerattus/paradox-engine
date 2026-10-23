@@ -35,7 +35,9 @@ class ClasspectService:
         self.settings = settings
 
     @staticmethod
-    def score_answers(quiz_json: list[dict], answer_indexes: list[int]) -> str:
+    def score_answers(
+        quiz_json: list[dict], answer_indexes: list[int], *, log_outputs: bool = True
+    ) -> str:
         if len(answer_indexes) != len(quiz_json):
             raise ValueError("The number of quiz answers does not match the questions")
 
@@ -54,14 +56,17 @@ class ClasspectService:
                 raise ValueError("Quiz answer index is out of range") from exc
             for result in answer["personality_types"]:
                 result_scores[result] += 1
-            logger.info(f"{question['question']}: {answer['answer']}")
+            if log_outputs:
+                logger.info("%s: %s", question["question"], answer["answer"])
 
-        logger.info(result_scores)
+        if log_outputs:
+            logger.info(result_scores)
         max_score = max(result_scores.values())
         max_results = [
             result for result in result_scores if result_scores[result] == max_score
         ]
-        logger.info(max_results)
+        if log_outputs:
+            logger.info(max_results)
         return random.choice(max_results)
 
     async def answer_questions_with_llm(
@@ -93,7 +98,8 @@ class ClasspectService:
             logger.exception("Quiz answerer failed to produce a valid response")
             raise
 
-        logger.info(llm_response.ThinkingSpace)
+        if self.settings.log_llm_outputs:
+            logger.info(llm_response.ThinkingSpace)
 
         # Iterate quiz_model fields in declaration order, skipping ThinkingSpace
         answers_in_order = [
@@ -101,7 +107,8 @@ class ClasspectService:
             for name in quiz_model.model_fields
             if name != "ThinkingSpace"
         ]
-        logger.info(answers_in_order)
+        if self.settings.log_llm_outputs:
+            logger.info(answers_in_order)
 
         answer_indexes = []
         for question, answer in zip(quiz_json, answers_in_order):
@@ -109,7 +116,9 @@ class ClasspectService:
                 item["answer"]: index for index, item in enumerate(question["answers"])
             }
             answer_indexes.append(answers_by_text[answer])
-        return self.score_answers(quiz_json, answer_indexes)
+        return self.score_answers(
+            quiz_json, answer_indexes, log_outputs=self.settings.log_llm_outputs
+        )
 
     async def answer_questions_with_classifier(
         self, quiz_json: list[dict], character_description: str
@@ -124,7 +133,9 @@ class ClasspectService:
             answer_lookups[question_name][choices[question_name]]
             for question_name in questions
         ]
-        return self.score_answers(quiz_json, answer_indexes)
+        return self.score_answers(
+            quiz_json, answer_indexes, log_outputs=self.settings.log_llm_outputs
+        )
 
     async def answer_questions(
         self,
@@ -174,8 +185,16 @@ class ClasspectService:
         class_answer_indexes: list[int],
         aspect_answer_indexes: list[int],
     ) -> ParadoxEngineOutput:
-        class_result = self.score_answers(class_quiz_json, class_answer_indexes)
-        aspect_result = self.score_answers(aspect_quiz_json, aspect_answer_indexes)
+        class_result = self.score_answers(
+            class_quiz_json,
+            class_answer_indexes,
+            log_outputs=self.settings.log_llm_outputs,
+        )
+        aspect_result = self.score_answers(
+            aspect_quiz_json,
+            aspect_answer_indexes,
+            log_outputs=self.settings.log_llm_outputs,
+        )
         return await self.generate_title(
             character_description,
             class_result=class_result,
@@ -192,7 +211,8 @@ class ClasspectService:
         class_result = class_result.split(" ")[0].capitalize()
         aspect_result = aspect_result.capitalize()
 
-        logger.info(f"Final answer: {class_result} of {aspect_result}")
+        if self.settings.log_llm_outputs:
+            logger.info("Final answer: %s of %s", class_result, aspect_result)
 
         class_prompt = self.prompts.classes[class_result.lower()]
         aspect_prompt = self.prompts.aspects[aspect_result.lower()]

@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 
 from paradox_engine.api.dependencies import resources
+from paradox_engine.api.rate_limit import limit_generation
 from paradox_engine.api.schemas import FraymotifRequest, FraymotifResponse
 from paradox_engine.fraymotifs.models import Title
 from paradox_engine.fraymotifs.utils import split_titles
@@ -12,7 +13,9 @@ router = APIRouter(tags=["fraymotifs"])
 Resources = Annotated[RuntimeResources, Depends(resources)]
 
 
-@router.post("/fraymotif", response_model=FraymotifResponse)
+@router.post(
+    "/fraymotif", response_model=FraymotifResponse, dependencies=[Depends(limit_generation)]
+)
 async def fraymotif(
     request: FraymotifRequest,
     runtime: Resources,

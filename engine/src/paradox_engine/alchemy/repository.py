@@ -5,7 +5,11 @@ from sqlmodel import select
 from paradox_engine.config import get_settings
 
 
-engine = create_async_engine(get_settings().database_url, echo=True)
+engine = create_async_engine(
+    get_settings().database_url,
+    echo=get_settings().database_echo,
+    hide_parameters=True,
+)
 session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 

@@ -4,7 +4,11 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 
 from paradox_engine.api.dependencies import resources
-from paradox_engine.api.rate_limit import limit_new_threads, limit_thread_messages
+from paradox_engine.api.rate_limit import (
+    limit_generation,
+    limit_new_threads,
+    limit_thread_messages,
+)
 from paradox_engine.api.schemas import (
     ClasspectRequest,
     ClasspectResponse,
@@ -45,7 +49,11 @@ def _thread_response(state: ClasspectThreadState) -> ClasspectThreadResponse:
     )
 
 
-@router.post("/classpect", response_model=ClasspectResponse)
+@router.post(
+    "/classpect",
+    response_model=ClasspectResponse,
+    dependencies=[Depends(limit_generation)],
+)
 async def classpect(request: ClasspectRequest, runtime: Resources) -> ClasspectResponse:
     result = await runtime.classpect.calculate_title(
         request.personality,

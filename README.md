@@ -70,7 +70,7 @@ Fill in the required values in `.docker.env`, then start the engine:
 ```bash
 docker run --name paradox-engine --restart unless-stopped \
   --env-file .docker.env \
-  -p 8000:8000 \
+  -p 127.0.0.1:8000:8000 \
   -v paradox-data:/data \
   -v "$PWD/prompts:/app/prompts:ro" \
   -v "$PWD/class_quiz.json:/app/class_quiz.json:ro" \
@@ -122,6 +122,40 @@ I manage dependencies with `uv`, because it's fast. Before all this, use `pip in
     ```
 
 **Note:** The Discord bot requires the FastAPI engine to be running and accessible at the configured API URL (default: http://localhost:8000).
+
+## Security and deployment
+
+- Keep the engine private or behind an HTTPS reverse proxy with authentication and
+  shared rate limits. CORS is not authentication: the API has no user accounts, and
+  anyone who knows a conversation's thread UUID can read or continue it. Treat
+  thread IDs as bearer credentials; do not share or log them.
+- Generation endpoints (`/classpect`, `/alchemy/alchemize`, and `/fraymotif`) share
+  a 15-second per-IP cooldown. Thread creation has a 60-second cooldown and thread
+  messages a 3-second cooldown. Limits are process-local, reset on restart, and do
+  not provide a global spending cap. Multiple workers require proxy-level shared
+  limits. Discord users share the bot's outbound IP and therefore its cooldown.
+- Only trust forwarded client-IP headers from a known reverse proxy. Do not set
+  Uvicorn's `FORWARDED_ALLOW_IPS` to `*` on an internet-accessible server.
+- Request bodies are capped at 128 KiB before JSON decoding, including chunked
+  requests. Configure `MAX_REQUEST_BODY_BYTES` if necessary, and enforce body-size,
+  request-timeout, concurrency, and spending limits at the proxy/provider too.
+- SQL parameter values are hidden from database logs. `DATABASE_ECHO=false` is the
+  default; do not enable verbose third-party HTTP/LLM logging in production.
+- Classpect debugging logs (model reasoning, quiz answers, scores, and final
+  titles) are controlled by `LOG_LLM_OUTPUTS`, which defaults to `true` (`yes` is
+  also accepted). Set `LOG_LLM_OUTPUTS=false` to disable these diagnostics. They
+  use the INFO log level and may contain personal details, so restrict log access
+  and retention when enabled. This setting is independent of `DATABASE_ECHO`.
+- `.env` and `.docker.env` are secrets, not image contents. If an image was built
+  with a real `.docker.env` before this exclusion was added, rotate its credentials
+  and replace affected images. Keep host Python/container base images patched.
+
+To recheck locked dependencies (repeat from both `engine` and `terminal`):
+
+```bash
+uv export --frozen --no-emit-project --format requirements-txt -o /tmp/requirements.txt
+uvx pip-audit --disable-pip --require-hashes -r /tmp/requirements.txt
+```
 
 ## Licensing
 

@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from paradox_engine.api.dependencies import resources
+from paradox_engine.api.rate_limit import limit_generation
 from paradox_engine.api.schemas import AlchemizeRequest, ItemResponse
 from paradox_engine.runtime import RuntimeResources
 
@@ -10,7 +11,9 @@ router = APIRouter(prefix="/alchemy", tags=["alchemy"])
 Resources = Annotated[RuntimeResources, Depends(resources)]
 
 
-@router.post("/alchemize", response_model=ItemResponse)
+@router.post(
+    "/alchemize", response_model=ItemResponse, dependencies=[Depends(limit_generation)]
+)
 async def alchemize(request: AlchemizeRequest, runtime: Resources) -> ItemResponse:
     item = await runtime.alchemy.alchemize_items(
         request.item_one,
